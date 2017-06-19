@@ -8,7 +8,27 @@ New Features
 
 - ``astropy.constants``
 
+  - Constants are now organized into version modules, with physical CODATA
+    constants in the ``codata2010`` and ``codata2014`` sub-modules,
+    and astronomical constants defined by the IAU in the ``iau2012`` and
+    ``iau2015`` sub-modules. The default constants in ``astropy.constants``
+    in Astropy 2.0 have been updated from ``iau2012`` to ``iau2015`` and
+    from ``codata2010`` to ``codata2014``. The constants for 1.3 can be
+    accessed in the ``astropyconst13`` sub-module and the constants for 2.0
+    (the default in ``astropy.constants``) can also be accessed in the
+    ``astropyconst20`` sub-module [#6083]
+
+  - The GM mass parameters recommended by IAU 2015 Resolution B 3 have been
+    added as ``GM_sun``, ``GM_jup``, and ``GM_earth``, for the Sun,
+    Jupiter and the Earth. [#6083]
+
 - ``astropy.convolution``
+
+  - Major change in convolution behavior and keyword arguments.   Additional
+    details are in the API section. [#5782]
+
+  - Convolution with un-normalized and un-normalizable kernels is now possible.
+    [#5782]
 
 - ``astropy.coordinates``
 
@@ -20,11 +40,21 @@ New Features
 
   - A class hierarchy was added to allow the representation layer to store
     differentials (i.e., finite derivatives) of coordinates.  This is intended
-    to enable support for velocities in coordinate frames down the road. [#5871]
+    to enable support for velocities in coordinate frames. [#5871]
 
   - ``replicate_without_data`` and ``replicate`` methods were added to
     coordinate frames that allow copying an existing frame object with various
     reference or copy behaviors and possibly overriding frame attributes. [#6182]
+
+  - The representation class instances can now contain differential objects.
+    This is primarily useful for internal operations that will provide support
+    for transforming velocity components in coordinate frames. [#6169]
+
+  - ``EarthLocation.to_geodetic()`` (and ``EarthLocation.geodetic``) now return
+    namedtuples instead of regular tuples. [#6237]
+
+  - ``EarthLocation`` now has ``lat`` and ``lon`` properties (equivalent to, but
+    preferred over, the previous ``latitude`` and ``longitude``). [#6237]
 
 - ``astropy.cosmology``
 
@@ -32,6 +62,9 @@ New Features
 
   - Allow to specify encoding in ``ascii.read``, only for Python 3 and with the
     pure-Python readers. [#5448]
+
+  - Writing latex tables with only a ``tabular`` environment is now possible by
+    setting ``latexdict['tabletyle']`` to ``None``. [#6205]
 
 - ``astropy.io.fits``
 
@@ -56,6 +89,8 @@ New Features
 
 - ``astropy.io.registry``
 
+  - New functions to unregister readers, writers, and identifiers. [#6217]
+
 - ``astropy.io.votable``
 
 - ``astropy.modeling``
@@ -75,10 +110,14 @@ New Features
     is controlled by a new optional boolean keyword ``with_bounding_box``. [#6081]
 
   - Added infrastructure support for units on parameters and during
-    model evaluation and fitting, added support for units on most
-    functional models and added a new BlackBody1D model. [#4855, #6183]
+    model evaluation and fitting, added support for units on all
+    functional, power-law, polynomial, and rotation models where this
+    is appropriate. A new BlackBody1D model has been added. [#4855, #6183,
+    #6204, #6235]
 
 - ``astropy.nddata``
+
+  - Added an image class, ``CCDData``. [#6173]
 
 - ``astropy.stats``
 
@@ -92,6 +131,8 @@ New Features
     instead of ``np.median`` when computing the median. [#5232]
 
   - Implemented statistical estimators for Ripley's K Function. [#5712]
+
+  - Added ``SigmaClip`` class. [#6206]
 
   - Added ``std_ddof`` keyword option to ``sigma_clipped_stats``.
     [#6066, #6207]
@@ -120,6 +161,11 @@ New Features
 
   - Added functionality to allow ``astropy.units.Quantity`` to be read
     from and written to a VOtable file. [#6132]
+
+- ``astropy.tests``
+
+  - ``enable_deprecations_as_exceptions`` function now accepts additional
+    user-defined module imports and warning messages to ignore. [#6223]
 
 - ``astropy.time``
 
@@ -154,6 +200,11 @@ New Features
   - ``Quantity`` now supports the ``@`` operator for matrix multiplication that
     was introduced in Python 3.5, for all supported versions of numpy. [#6144]
 
+  - ``Quantity`` supports the new ``__array_ufunc__`` protocol introduced in
+    numpy 1.13.  As a result, operations that involve unit conversion will be
+    sped up considerably (by up to a factor of two for costly operations such
+    as trigonometric ones). [#2583]
+
 - ``astropy.utils``
 
   - Added a new ``dataurl_mirror`` configuration item in ``astropy.utils.data``
@@ -164,6 +215,8 @@ New Features
 - ``astropy.vo``
 
 - ``astropy.wcs``
+
+  - Upgraded the included wcslib to version 5.16. [#6225]
 
 - ``astropy.extern``
 
@@ -176,11 +229,24 @@ API Changes
 
 - ``astropy.convolution``
 
+  - Major change in convolution behavior and keyword arguments.
+    `astropy.convolution.convolve_fft` replaced ``interpolate_nan`` with
+    ``nan_treatment``, and `astropy.convolution.convolve` received a new
+    ``nan_treatment`` argument. `astropy.convolution.convolve` also no longer
+    double-interpolates interpolates over NaNs, although that is now available
+    as a separate `astropy.convolution.interpolate_replace_nans` function. See
+    :ref:`the backwards compatibility note <astropy_convolve_compat>` for more
+    on how to get the old behavior (and why you probably don't want to.) [#5782]
+
 - ``astropy.coordinates``
 
   - Removed deprecated ``angles.rotation_matrix`` and
     ``angles.angle_axis``. Use the routines in
     ``coordinates.matrix_utilities`` instead. [#6170]
+
+  - ``EarthLocation.latitude`` and ``EarthLocation.longitude`` are now
+    deprecated in favor of ``EarthLocation.lat`` and ``EarthLocation.lon``.
+    They former will be removed in a future version. [#6237]
 
 - ``astropy.cosmology``
 
@@ -218,6 +284,10 @@ API Changes
 
   - Deprecated ``GaussianAbsorption1D`` model, as it can be better represented
     by subtracting ``Gaussian1D`` from ``Const1D``. [#6200]
+
+  - Added method ``sum_of_implicit_terms`` to ``Model``, needed when performing
+    a linear fit to a model that has built-in terms with no corresponding
+    parameters (primarily the ``1*x`` term of ``Shift``). [#6174]
 
 - ``astropy.nddata``
 
@@ -264,7 +334,21 @@ API Changes
   - Moved ``units.cgs.emu`` to ``units.deprecated.emu`` due to ambiguous
     definition of "emu". [#4918, #5906]
 
+  - ``jupiterMass``, ``earthMass``, ``jupiterRad``, and ``earthRad`` no longer
+    have their prefixed units included in the standard units.  If needed, they
+    can still  be found in ``units.deprecated``. [#5661]
+
+  - ``solLum``,``solMass``, and ``solRad`` no longer have  their prefixed units
+    included in the standard units.  If needed, they can still be found in
+    ``units.required_by_vounit``, and are enabled by default. [#5661]
+
   - Removed deprecated ``Unit.get_converter``. [#6170]
+
+  - Internally, astropy replaced use of ``.to(unit).value`` with the new
+    ``to_value(unit)`` method, since this is somewhat faster. Any subclasses
+    that overwrote ``.to``, should also overwrite ``.to_value`` (or
+    possibly just the private ``._to_value`` method.  (If you did this,
+    please let us know what was lacking that made this necessary!). [#6136]
 
 - ``astropy.utils``
 
@@ -281,7 +365,8 @@ API Changes
     Astroquery 0.3.5 and will be removed from Astropy in a future version.
     [#5558, #5904]
 
-  - The `astropy.vo.samp` package no longer supports SSL. [#6201]
+  - The ``astropy.vo.samp`` package has been moved to ``astropy.samp``, and no
+    longer supports HTTPS/SSL. [#6201, #6213]
 
 - ``astropy.wcs``
 
@@ -298,6 +383,11 @@ Bug Fixes
 
 - ``astropy.convolution``
 
+  - Major change in convolution behavior and keyword arguments:
+    `~astropy.convolution.convolve` was not performing normalized convolution
+    in earlier versions of astropy.
+    [#5782]
+
 - ``astropy.coordinates``
 
 - ``astropy.cosmology``
@@ -311,6 +401,8 @@ Bug Fixes
   - ``comments`` meta key (which is ``io.ascii``'s table convention) is output
     to ``COMMENT`` instead of ``COMMENTS`` header. Similarly, ``COMMENT``
     headers are read into ``comments`` meta [#6097]
+
+  - Use more sensible fix values for invalid NAXISj header values. [#5935]
 
 - ``astropy.io.misc``
 
@@ -333,6 +425,10 @@ Bug Fixes
     original model), which in turn caused fitting to fail as a no-op. [#6085]
 
   - Allow ``Ring2D`` to be defined using ``r_out``. [#6192]
+
+  - Make ``LinearLSQFitter`` produce correct results with fixed model
+    parameters and allow ``Shift`` and ``Scale`` to be fitted with
+    ``LinearLSQFitter`` and ``LevMarLSQFitter``. [#6174]
 
 - ``astropy.nddata``
 

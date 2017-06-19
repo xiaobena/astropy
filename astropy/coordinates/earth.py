@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 from warnings import warn
+import collections
 import socket
 import json
 
@@ -16,7 +17,7 @@ from ..utils.compat.numpy import broadcast_to
 from .angles import Longitude, Latitude
 from .representation import CartesianRepresentation
 from .errors import UnknownSiteException
-from ..utils import data
+from ..utils import data, deprecated
 
 try:
     # Not guaranteed available at setup time.
@@ -26,6 +27,8 @@ except ImportError:
         raise
 
 __all__ = ['EarthLocation']
+
+GeodeticLocation = collections.namedtuple('GeodeticLocation', ['lon', 'lat', 'height'])
 
 # Available ellipsoids (defined in erfam.h, with numbers exposed in erfa).
 ELLIPSOIDS = ('WGS84', 'GRS80', 'WGS72')
@@ -232,9 +235,9 @@ class EarthLocation(u.Quantity):
             height = u.Quantity(height, u.m, copy=False)
         # convert to float in units required for erfa routine, and ensure
         # all broadcast to same shape, and are at least 1-dimensional.
-        _lon, _lat, _height = np.broadcast_arrays(lon.to(u.radian).value,
-                                                  lat.to(u.radian).value,
-                                                  height.to(u.m).value)
+        _lon, _lat, _height = np.broadcast_arrays(lon.to_value(u.radian),
+                                                  lat.to_value(u.radian),
+                                                  height.to_value(u.m))
         # get geocentric coordinates. Have to give one-dimensional array.
         xyz = erfa.gd2gc(getattr(erfa, ellipsoid), _lon.ravel(),
                                  _lat.ravel(), _height.ravel())
@@ -475,19 +478,32 @@ class EarthLocation(u.Quantity):
         ellipsoid = _check_ellipsoid(ellipsoid, default=self.ellipsoid)
         self_array = self.to(u.meter).view(self._array_dtype, np.ndarray)
         lon, lat, height = erfa.gc2gd(getattr(erfa, ellipsoid), self_array)
-        return (Longitude(lon * u.radian, u.degree,
-                          wrap_angle=180.*u.degree),
-                Latitude(lat * u.radian, u.degree),
-                u.Quantity(height * u.meter, self.unit))
+        return GeodeticLocation(
+            Longitude(lon * u.radian, u.degree,
+                      wrap_angle=180.*u.degree, copy=False),
+            Latitude(lat * u.radian, u.degree, copy=False),
+            u.Quantity(height * u.meter, self.unit, copy=False))
 
     @property
+    @deprecated('2.0', alternative='`lon`', obj_type='property')
     def longitude(self):
         """Longitude of the location, for the default ellipsoid."""
         return self.geodetic[0]
 
     @property
+    def lon(self):
+        """Longitude of the location, for the default ellipsoid."""
+        return self.geodetic[0]
+
+    @property
+    @deprecated('2.0', alternative='`lat`', obj_type='property')
     def latitude(self):
         """Latitude of the location, for the default ellipsoid."""
+        return self.geodetic[1]
+
+    @property
+    def lat(self):
+        """Longitude of the location, for the default ellipsoid."""
         return self.geodetic[1]
 
     @property
