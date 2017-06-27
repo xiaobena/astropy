@@ -8,17 +8,18 @@ from __future__ import (absolute_import, unicode_literals, division,
 
 import os.path
 
-import pytest
 import numpy as np
-from numpy import linalg
-from numpy.testing.utils import assert_allclose, assert_almost_equal
 
+from numpy import linalg
+from numpy.testing.utils import assert_raises
+from numpy.testing.utils import assert_allclose, assert_almost_equal
 from . import irafutil
 from .. import models
 from ..core import Fittable2DModel, Parameter
 from ..fitting import *
 from ...utils import NumpyRNGContext
 from ...utils.data import get_pkg_data_filename
+from ...tests.helper import pytest
 from .utils import ignore_non_integer_warning
 from ...stats import sigma_clip
 
@@ -249,54 +250,6 @@ class TestLinearLSQFitter(object):
         fitted_model = fitter(init_model, x, y, z)
         assert_allclose(fitted_model(x, y, model_set_axis=False), z_expected,
                         rtol=1e-1)
-
-    def test_linear_fit_fixed_parameter(self):
-        """
-        Tests fitting a polynomial model with a fixed parameter (issue #6135).
-        """
-        init_model = models.Polynomial1D(degree=2, c1=1)
-        init_model.c1.fixed = True
-
-        x = np.arange(10)
-        y = 2 + x + 0.5*x*x
-
-        fitter = LinearLSQFitter()
-        fitted_model = fitter(init_model, x, y)
-        assert_allclose(fitted_model.parameters, [2., 1., 0.5], atol=1e-14)
-
-    def test_linear_fit_model_set_fixed_parameter(self):
-        """
-        Tests fitting a polynomial model set with a fixed parameter (#6135).
-        """
-        init_model = models.Polynomial1D(degree=2, c1=[1, -2], n_models=2)
-        init_model.c1.fixed = True
-
-        x = np.arange(10)
-        yy = np.array([2 + x + 0.5*x*x, -2*x])
-
-        fitter = LinearLSQFitter()
-        fitted_model = fitter(init_model, x, yy)
-
-        assert_allclose(fitted_model.c0, [2., 0.], atol=1e-14)
-        assert_allclose(fitted_model.c1, [1., -2.], atol=1e-14)
-        assert_allclose(fitted_model.c2, [0.5, 0.], atol=1e-14)
-
-    def test_linear_fit_2d_model_set_fixed_parameters(self):
-        """
-        Tests fitting a 2d polynomial model set with fixed parameters (#6135).
-        """
-        init_model = models.Polynomial2D(degree=2, c1_0=[1, 2], c0_1=[-0.5, 1],
-                                         n_models=2,
-                                         fixed={'c1_0' : True, 'c0_1' : True})
-
-        x, y = np.mgrid[0:5, 0:5]
-        zz = np.array([1+x-0.5*y+0.1*x*x, 2*x+y-0.2*y*y])
-
-        fitter = LinearLSQFitter()
-        fitted_model = fitter(init_model, x, y, zz)
-
-        assert_allclose(fitted_model(x, y, model_set_axis=False), zz,
-                        atol=1e-14)
 
 
 @pytest.mark.skipif('not HAS_SCIPY')
@@ -648,64 +601,19 @@ class Test2DFittingWithOutlierRemoval(object):
 
         # test with Levenberg-Marquardt Least Squares fitter
         fit = FittingWithOutlierRemoval(LevMarLSQFitter(), sigma_clip,
-                                        niter=3, sigma=3.)
+                                        niter=3, sigma=4.)
         _, fitted_model = fit(g2_init, self.x, self.y, self.z)
         assert_allclose(fitted_model.parameters[0:5], self.model_params,
                         atol=1e-1)
         # test with Sequential Least Squares Programming fitter
         fit = FittingWithOutlierRemoval(SLSQPLSQFitter(), sigma_clip, niter=3,
-                                        sigma=3.)
+                                        sigma=4.)
         _, fitted_model = fit(g2_init, self.x, self.y, self.z)
         assert_allclose(fitted_model.parameters[0:5], self.model_params,
                         atol=1e-1)
         # test with Simplex LSQ fitter
         fit = FittingWithOutlierRemoval(SimplexLSQFitter(), sigma_clip,
-                                        niter=3, sigma=3.)
+                                        niter=3, sigma=4.)
         _, fitted_model = fit(g2_init, self.x, self.y, self.z)
         assert_allclose(fitted_model.parameters[0:5], self.model_params,
                         atol=1e-1)
-
-
-@pytest.mark.skipif('not HAS_SCIPY')
-def test_fitters_with_weights():
-    """Issue #5737 """
-    Xin, Yin = np.mgrid[0:21, 0:21]
-    fitter = LevMarLSQFitter()
-
-    with NumpyRNGContext(_RANDOM_SEED):
-        zsig = np.random.normal(0, 0.01, size=Xin.shape)
-
-    # Non-linear model
-    g2 = models.Gaussian2D(10, 10, 9, 2, 3)
-    z = g2(Xin, Yin)
-    gmod = fitter(models.Gaussian2D(15, 7, 8, 1.3, 1.2), Xin, Yin, z + zsig)
-    assert_allclose(gmod.parameters, g2.parameters, atol=10 ** (-2))
-
-    # Linear model
-    p2=models.Polynomial2D(3)
-    p2.parameters=np.arange(10)/1.2
-    z = p2(Xin, Yin)
-    pmod = fitter(models.Polynomial2D(3), Xin, Yin, z + zsig)
-    assert_allclose(pmod.parameters, p2.parameters, atol=10 ** (-2))
-
-
-@pytest.mark.skipif('not HAS_SCIPY')
-def test_fitters_interface():
-    """
-    Test that **kwargs work with all optimizers.
-    This is a basic smoke test.
-    """
-    levmar = LevMarLSQFitter()
-    slsqp = SLSQPLSQFitter()
-    simplex = SimplexLSQFitter()
-
-    kwargs = {'maxiter': 77, 'verblevel': 1, 'epsilon': 1e-2, 'acc': 1e-6}
-    simplex_kwargs = {'maxiter': 77, 'verblevel': 1, 'acc': 1e-6}
-    model = models.Gaussian1D(10, 4, .3)
-    x = np.arange(21)
-    y = model(x)
-
-    slsqp_model = slsqp(model, x, y, **kwargs)
-    simplex_model = simplex(model, x, y, **simplex_kwargs)
-    kwargs.pop('verblevel')
-    lm_model = levmar(model, x, y, **kwargs)

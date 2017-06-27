@@ -38,17 +38,17 @@ class ConstantMeta(InheritDocstrings):
             @functools.wraps(meth)
             def wrapper(self, *args, **kwargs):
                 name_lower = self.name.lower()
-                instances = self._registry[name_lower]
+                instances = Constant._registry[name_lower]
                 if not self._checked_units:
                     for inst in six.itervalues(instances):
                         try:
                             self.unit.to(inst.unit)
                         except UnitsError:
-                            self._has_incompatible_units.add(name_lower)
+                            Constant._has_incompatible_units.add(name_lower)
                     self._checked_units = True
 
                 if (not self.system and
-                        name_lower in self._has_incompatible_units):
+                        name_lower in Constant._has_incompatible_units):
                     systems = sorted([x for x in instances if x])
                     raise TypeError(
                         'Constant {0!r} does not have physically compatible '
@@ -86,22 +86,18 @@ class Constant(Quantity):
     _registry = {}
     _has_incompatible_units = set()
 
-    def __new__(cls, abbrev, name, value, unit, uncertainty,
-                reference=None, system=None):
-        if reference is None:
-            reference = getattr(cls, 'default_reference', None)
-            if reference is None:
-                raise TypeError("{} requires a reference.".format(cls))
+    def __new__(cls, abbrev, name, value, unit, uncertainty, reference,
+                system=None):
         name_lower = name.lower()
-        instances = cls._registry.setdefault(name_lower, {})
+        instances = Constant._registry.setdefault(name_lower, {})
+        if system in instances:
+            warnings.warn('Constant {0!r} is already has a definition in the '
+                          '{1!r} system'.format(name, system),
+                          AstropyUserWarning)
         # By-pass Quantity initialization, since units may not yet be
         # initialized here, and we store the unit in string form.
         inst = np.array(value).view(cls)
 
-        if system in instances:
-                warnings.warn('Constant {0!r} already has a definition in the '
-                              '{1!r} system from {2!r} reference'.format(
-                              name, system, reference), AstropyUserWarning)
         for c in six.itervalues(instances):
             if system is not None and not hasattr(c.__class__, system):
                 setattr(c, system, inst)
@@ -122,8 +118,8 @@ class Constant(Quantity):
         return inst
 
     def __repr__(self):
-        return ('<{0} name={1!r} value={2} uncertainty={3} unit={4!r} '
-                'reference={5!r}>'.format(self.__class__, self.name, self.value,
+        return ('<Constant name={0!r} value={1} uncertainty={2} unit={3!r} '
+                'reference={4!r}>'.format(self.name, self.value,
                                           self.uncertainty, str(self.unit),
                                           self.reference))
 
@@ -195,7 +191,7 @@ class Constant(Quantity):
         the constant, else convert to a Quantity in the appropriate SI units.
         """
 
-        instances = self._registry[self.name.lower()]
+        instances = Constant._registry[self.name.lower()]
         return instances.get('si') or super(Constant, self).si
 
     @property
@@ -204,7 +200,7 @@ class Constant(Quantity):
         the constant, else convert to a Quantity in the appropriate CGS units.
         """
 
-        instances = self._registry[self.name.lower()]
+        instances = Constant._registry[self.name.lower()]
         return instances.get('cgs') or super(Constant, self).cgs
 
     def __array_finalize__(self, obj):

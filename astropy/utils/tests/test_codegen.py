@@ -5,9 +5,8 @@ from __future__ import (absolute_import, division, print_function,
 import sys
 import traceback
 
-import pytest
-
 from ..codegen import make_function_with_signature
+from ...tests.helper import pytest
 
 
 def test_make_function_with_signature_lineno():

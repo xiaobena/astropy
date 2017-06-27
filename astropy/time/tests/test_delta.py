@@ -4,8 +4,7 @@ import itertools
 import numpy as np
 import operator
 
-import pytest
-
+from ...tests.helper import pytest
 from .. import (Time, TimeDelta, OperandTypeError, ScaleValueError,
                 TIME_SCALES, TIME_DELTA_SCALES)
 from ... import units as u

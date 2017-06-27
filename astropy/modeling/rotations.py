@@ -29,9 +29,6 @@ import numpy as np
 from .core import Model
 from .parameters import Parameter
 from ..extern.six.moves import zip
-from ..coordinates.matrix_utilities import rotation_matrix, matrix_product
-from .. import units as u
-from ..utils.decorators import deprecated
 
 
 __all__ = ['RotateCelestial2Native', 'RotateNative2Celestial', 'Rotation2D',
@@ -45,12 +42,28 @@ class _EulerRotation(object):
     def _create_matrix(self, phi, theta, psi, axes_order):
         matrices = []
         for angle, axis in zip([phi, theta, psi], axes_order):
-            if isinstance(angle, u.Quantity):
-                angle = angle.value
-            angle = np.asscalar(angle)
-            matrices.append(rotation_matrix(angle, axis, unit=u.rad))
-        result = matrix_product(*matrices[::-1])
-        return result
+            matrix = np.zeros((3, 3), dtype=np.float)
+            if axis == 'x':
+                mat = self.rotation_matrix_from_angle(angle)
+                matrix[0, 0] = 1
+                matrix[1:, 1:] = mat
+            elif axis == 'y':
+                mat = self.rotation_matrix_from_angle(-angle)
+                matrix[1, 1] = 1
+                matrix[0, 0] = mat[0, 0]
+                matrix[0, 2] = mat[0, 1]
+                matrix[2, 0] = mat[1, 0]
+                matrix[2, 2] = mat[1, 1]
+            elif axis == 'z':
+                mat = self.rotation_matrix_from_angle(angle)
+                matrix[2, 2] = 1
+                matrix[:2, :2] = mat
+            else:
+                raise ValueError("Expected axes_order to be a combination of characters"
+                                 "'x', 'y' and 'z', got {0}".format(
+                                     set(axes_order).difference(self.axes)))
+            matrices.append(matrix)
+        return np.dot(matrices[2], np.dot(matrices[1], matrices[0]))
 
     @staticmethod
     def spherical2cartesian(alpha, delta):
@@ -68,7 +81,6 @@ class _EulerRotation(object):
         delta = np.rad2deg(np.arctan2(z, h))
         return alpha, delta
 
-    @deprecated(2.0)
     @staticmethod
     def rotation_matrix_from_angle(angle):
         """
@@ -96,18 +108,6 @@ class _EulerRotation(object):
             a.shape = shape
             b.shape = shape
         return a, b
-
-    input_units_strict = True
-
-    input_units_allow_dimensionless = True
-
-    @property
-    def input_units(self):
-        return {'alpha': u.deg, 'delta': u.deg}
-
-    @property
-    def return_units(self):
-        return {'alpha': u.deg, 'delta': u.deg}
 
 
 class EulerAngleRotation(_EulerRotation, Model):
@@ -145,10 +145,6 @@ class EulerAngleRotation(_EulerRotation, Model):
             raise ValueError("Unrecognized axis label {0}; "
                              "should be one of {1} ".format(unrecognized, self.axes))
         self.axes_order = axes_order
-        qs = [isinstance(par, u.Quantity) for par in [phi, theta, psi]]
-        if any(qs) and not all(qs):
-            raise TypeError("All parameters should be of the same type - float or Quantity.")
-
         super(EulerAngleRotation, self).__init__(phi=phi, theta=theta, psi=psi, **kwargs)
 
     def inverse(self):
@@ -158,7 +154,18 @@ class EulerAngleRotation(_EulerRotation, Model):
                               axes_order=self.axes_order[::-1])
 
     def evaluate(self, alpha, delta, phi, theta, psi):
-        a, b = super(EulerAngleRotation, self).evaluate(alpha, delta, phi, theta, psi, self.axes_order)
+        shape = None
+        if isinstance(alpha, np.ndarray) and alpha.ndim == 2:
+            alpha = alpha.flatten()
+            delta = delta.flatten()
+            shape = alpha.shape
+        inp = self.spherical2cartesian(alpha, delta)
+        matrix = self._create_matrix(phi, theta, psi, self.axes_order)
+        result = np.dot(matrix, inp)
+        a, b = self.cartesian2spherical(*result)
+        if shape is not None:
+            a.shape = shape
+            b.shape = shape
         return a, b
 
 
@@ -172,9 +179,6 @@ class _SkyRotation(_EulerRotation, Model):
     lon_pole = Parameter(default=0, getter=np.rad2deg, setter=np.deg2rad)
 
     def __init__(self, lon, lat, lon_pole, **kwargs):
-        qs = [isinstance(par, u.Quantity) for par in [lon, lat, lon_pole]]
-        if any(qs) and not all(qs):
-            raise TypeError("All parameters should be of the same type - float or Quantity.")
         super(_SkyRotation, self).__init__(lon, lat, lon_pole, **kwargs)
         self.axes_order = 'zxz'
 
@@ -183,9 +187,9 @@ class _SkyRotation(_EulerRotation, Model):
                                                           lon_pole, self.axes_order)
         mask = alpha < 0
         if isinstance(mask, np.ndarray):
-            alpha[mask] += 360
+            alpha[mask] +=360
         else:
-            alpha += 360
+            alpha +=360
         return alpha, delta
 
 
@@ -279,10 +283,6 @@ class Rotation2D(Model):
 
     angle = Parameter(default=0.0, getter=np.rad2deg, setter=np.deg2rad)
 
-    input_units_strict = True
-
-    input_units_allow_dimensionless = True
-
     @property
     def inverse(self):
         """Inverse rotation."""
@@ -303,20 +303,14 @@ class Rotation2D(Model):
         # Note: If the original shape was () (an array scalar) convert to a
         # 1-element 1-D array on output for consistency with most other models
         orig_shape = x.shape or (1,)
-        if isinstance(x, u.Quantity):
-            unit = x.unit
-        else:
-            unit = None
+
         inarr = np.array([x.flatten(), y.flatten()])
-        if isinstance(angle, u.Quantity):
-            angle = angle.value
         result = np.dot(cls._compute_matrix(angle), inarr)
+
         x, y = result[0], result[1]
         x.shape = y.shape = orig_shape
-        if unit is not None:
-            return u.Quantity(x, unit=unit), u.Quantity(y, unit=unit)
-        else:
-            return x, y
+
+        return x, y
 
     @staticmethod
     def _compute_matrix(angle):

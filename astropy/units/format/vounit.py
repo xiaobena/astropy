@@ -32,7 +32,6 @@ class VOUnit(generic.Generic):
     @staticmethod
     def _generate_unit_names():
         from ... import units as u
-        from ...units import required_by_vounit as uvo
 
         names = {}
         deprecated_names = set()
@@ -72,8 +71,7 @@ class VOUnit(generic.Generic):
                         continue
                     if keyword.iskeyword(key):
                         continue
-
-                    names[key] = getattr(u if hasattr(u, key) else uvo, key)
+                    names[key] = getattr(u, key)
                     if base in deprecated_units:
                         deprecated_names.add(key)
 

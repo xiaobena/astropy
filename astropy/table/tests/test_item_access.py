@@ -5,10 +5,9 @@
 """ Verify item access API in:
 https://github.com/astropy/astropy/wiki/Table-item-access-definition
 """
-
-import pytest
 import numpy as np
 
+from ...tests.helper import pytest
 
 
 @pytest.mark.usefixtures('table_data')
@@ -93,36 +92,34 @@ class TestTableColumnsItems(BaseTestItems):
 @pytest.mark.usefixtures('table_data')
 class TestTableItems(BaseTestItems):
 
-    @pytest.mark.parametrize("idx", [1, np.int64(1), np.array(1)])
-    def test_column(self, table_data, idx):
+    def test_column(self, table_data):
         """Column access returns REFERENCE to data"""
         self.t = table_data.Table(table_data.COLS)
         self.tc = self.t.columns
 
         a = self.t['a']
-        assert a[idx] == 2
-        a[idx] = 0
-        assert self.t['a'][idx] == 0
+        assert a[1] == 2
+        a[1] = 0
+        assert self.t['a'][1] == 0
 
-    @pytest.mark.parametrize("idx", [1, np.int64(1), np.array(1)])
-    def test_row(self, table_data, idx):
+    def test_row(self, table_data):
         """Row  access returns REFERENCE to data"""
         self.t = table_data.Table(table_data.COLS)
         self.tc = self.t.columns
 
-        row = self.t[idx]
+        row = self.t[1]
         assert row['a'] == 2
-        assert row[idx] == 5
+        assert row[1] == 5
         assert row.columns['a'].attrs_equal(table_data.COLS[0])
         assert row.columns['b'].attrs_equal(table_data.COLS[1])
         assert row.columns['c'].attrs_equal(table_data.COLS[2])
 
         # Check that setting by col index sets the table and row value
-        row[idx] = 0
-        assert row[idx] == 0
+        row[1] = 0
+        assert row[1] == 0
         assert row['b'] == 0
-        assert self.t['b'][idx] == 0
-        assert self.t[idx]['b'] == 0
+        assert self.t['b'][1] == 0
+        assert self.t[1]['b'] == 0
 
         # Check that setting by col name sets the table and row value
         row['a'] = 0

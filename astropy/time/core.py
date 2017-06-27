@@ -36,7 +36,7 @@ from .formats import TimeFromEpoch  # pylint: disable=W0611
 
 
 __all__ = ['Time', 'TimeDelta', 'TIME_SCALES', 'TIME_DELTA_SCALES',
-           'ScaleValueError', 'OperandTypeError', 'TimeInfo']
+           'ScaleValueError', 'OperandTypeError']
 
 
 TIME_SCALES = ('tai', 'tcb', 'tcg', 'tdb', 'tt', 'ut1', 'utc')
@@ -294,8 +294,8 @@ class Time(ShapedLikeNDArray):
         if scale is not None:
             if not (isinstance(scale, six.string_types) and
                     scale.lower() in self.SCALES):
-                raise ScaleValueError("Scale {0!r} is not in the allowed scales "
-                                      "{1}".format(scale,
+                raise ScaleValueError("Scale {0} is not in the allowed scales "
+                                      "{1}".format(repr(scale),
                                                    sorted(self.SCALES)))
 
         # Parse / convert input values into internal jd1, jd2 based on format
@@ -329,8 +329,8 @@ class Time(ShapedLikeNDArray):
                 raise ValueError("No time format was given, and the input is "
                                  "not unique")
             else:
-                raise ValueError("Format {0!r} is not one of the allowed "
-                                 "formats {1}".format(format,
+                raise ValueError("Format {0} is not one of the allowed "
+                                 "formats {1}".format(repr(format),
                                                       sorted(self.FORMATS)))
         else:
             formats = [(format, self.FORMATS[format])]
@@ -431,8 +431,8 @@ class Time(ShapedLikeNDArray):
         if scale == self.scale:
             return
         if scale not in self.SCALES:
-            raise ValueError("Scale {0!r} is not in the allowed scales {1}"
-                             .format(scale, sorted(self.SCALES)))
+            raise ValueError("Scale {0} is not in the allowed scales {1}"
+                             .format(repr(scale), sorted(self.SCALES)))
 
         # Determine the chain of scale transformations to get from the current
         # scale to the new scale.  MULTI_HOPS contains a dict of all
@@ -1227,9 +1227,9 @@ class Time(ShapedLikeNDArray):
         return self._delta_ut1_utc
 
     def _set_delta_ut1_utc(self, val):
+        val = self._match_shape(val)
         if hasattr(val, 'to'):  # Matches Quantity but also TimeDelta.
             val = val.to(u.second).value
-        val = self._match_shape(val)
         self._delta_ut1_utc = val
         del self.cache
 
@@ -1272,15 +1272,15 @@ class Time(ShapedLikeNDArray):
             rxy = np.hypot(location.x, location.y)
             z = location.z
             self._delta_tdb_tt = erfa.dtdb(
-                jd1, jd2, ut, lon.to_value(u.radian),
-                rxy.to_value(u.km), z.to_value(u.km))
+                jd1, jd2, ut, lon.to(u.radian).value,
+                rxy.to(u.km).value, z.to(u.km).value)
 
         return self._delta_tdb_tt
 
     def _set_delta_tdb_tt(self, val):
+        val = self._match_shape(val)
         if hasattr(val, 'to'):  # Matches Quantity but also TimeDelta.
             val = val.to(u.second).value
-        val = self._match_shape(val)
         self._delta_tdb_tt = val
         del self.cache
 
@@ -1529,8 +1529,8 @@ class TimeDelta(Time):
         if scale == self.scale:
             return
         if scale not in self.SCALES:
-            raise ValueError("Scale {0!r} is not in the allowed scales {1}"
-                             .format(scale, sorted(self.SCALES)))
+            raise ValueError("Scale {0} is not in the allowed scales {1}"
+                             .format(repr(scale), sorted(self.SCALES)))
 
         # For TimeDelta, there can only be a change in scale factor,
         # which is written as time2 - time1 = scale_offset * time1

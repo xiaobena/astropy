@@ -195,13 +195,7 @@ class CompImageHeader(Header):
 
         remapped_keyword = self._remap_keyword(card.keyword)
         card = Card(remapped_keyword, card.value, card.comment)
-
-        # Here we disable the use of blank cards, because the call above to
-        # Header.append may have already deleted a blank card in the table
-        # header, thanks to inheritance: Header.append calls 'del self[-1]'
-        # to delete a blank card, which calls CompImageHeader.__deltitem__,
-        # which deletes the blank card both in the image and the table headers!
-        self._table_header.append(card=card, useblanks=False,
+        self._table_header.append(card=card, useblanks=useblanks,
                                   bottom=bottom, end=end)
 
     def insert(self, key, card, useblanks=True, after=False):
@@ -244,12 +238,7 @@ class CompImageHeader(Header):
 
         card = Card(remapped_keyword, card.value, card.comment)
 
-        # Here we disable the use of blank cards, because the call above to
-        # Header.insert may have already deleted a blank card in the table
-        # header, thanks to inheritance: Header.insert calls 'del self[-1]'
-        # to delete a blank card, which calls CompImageHeader.__delitem__,
-        # which deletes the blank card both in the image and the table headers!
-        self._table_header.insert(remapped_index, card, useblanks=False,
+        self._table_header.insert(remapped_index, card, useblanks=useblanks,
                                   after=after)
 
     def _update(self, card):
@@ -1651,13 +1640,7 @@ class CompImageHDU(BinTableHDU):
             should_swap = not self.data.dtype.isnative
 
         if should_swap:
-
-            if self.data.flags.writeable:
-                self.data.byteswap(True)
-            else:
-                # For read-only arrays, there is no way around making
-                # a byteswapped copy of the data.
-                self.data = self.data.byteswap(False)
+            self.data.byteswap(True)
 
         try:
             nrows = self._header['NAXIS2']

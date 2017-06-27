@@ -3,13 +3,12 @@
 
 # TEST_UNICODE_LITERALS
 
-import pytest
 import numpy as np
 
+from ...tests.helper import pytest
 from ... import table
-from ...table import Table, QTable
+from ...table import Table
 from ...table.table_helpers import simple_table
-from ... import units as u
 from ...extern.six import PY2
 from ...utils import console
 
@@ -535,10 +534,10 @@ def test_pprint_py3_bytes():
     Also make sure special characters are printed in Python 2.
     """
     val = str('val') if PY2 else bytes('val', encoding='utf-8')
-    blah = u'bläh'.encode('utf-8')
+    blah = u'bläh'.encode('utf-8') if PY2 else bytes('bläh', encoding='utf-8')
     dat = np.array([val, blah], dtype=[(str('col'), 'S10')])
     t = table.Table(dat)
-    assert t['col'].pformat() == ['col ', '----', ' val', u'bläh']
+    assert t['col'].pformat() == ['col ', '----', ' val', u'bl\xe4h']
 
 
 def test_pprint_nameless_col():
@@ -674,23 +673,3 @@ def test_align():
 
     with pytest.raises(ValueError):
         t.pprint(align='x=')
-
-
-def test_auto_format_func():
-    """Test for #5802 (fix for #5800 where format_func key is not unique)"""
-    t = Table([[1, 2] * u.m])
-    t['col0'].format = '%f'
-    t.pformat()  # Force caching of format function
-
-    qt = QTable(t)
-    qt.pformat()  # Generates exception prior to #5802
-
-
-def test_decode_replace():
-    """
-    Test printing a bytestring column with a value that fails
-    decoding to utf-8 and gets replaced by U+FFFD.  See
-    https://docs.python.org/3/library/codecs.html#codecs.replace_errors
-    """
-    t = Table([[b'Z\xf0']])
-    assert t.pformat() == [u'col0', u'----', u'  Z\ufffd']

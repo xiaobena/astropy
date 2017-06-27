@@ -29,14 +29,6 @@ The classification is as follows:
               color: #03a913;
               content: "⬤";
          }
-         .pendingdep:before {
-              color: #a84b03;
-              content: "⬤";
-         }
-         .deprecated:before {
-              color: #ff0000;
-              content: "⬤";
-         }
     </style>
 
     <table align='center'>
@@ -55,14 +47,6 @@ The classification is as follows:
       <tr>
         <td align='center'><span class="mature"></span></td>
         <td>Mature.  Additions/improvements possible, but no major changes planned. </td>
-      </tr>
-      <tr>
-        <td align='center'><span class="pendingdep"></span></td>
-        <td>Pending deprecation.  Might be deprecated in a future version.</td>
-      </tr>
-      <tr>
-        <td align='center'><span class="deprecated"></span></td>
-        <td>Deprecated.  Might be removed in a future version.</td>
       </tr>
     </table>
 
@@ -87,21 +71,10 @@ The current planned and existing sub-packages are:
                 astropy.analytic_functions
             </td>
             <td align='center'>
-                <span class="pendingdep"></span>
+                <span class="dev"></span>
             </td>
             <td>
-                New in v1.0. Contains blackbody calculations. Will be deprecated when <tt class="docutils literal"><span class="pre">astropy.modeling</span></tt> supports units.
-            </td>
-        </tr>
-        <tr>
-            <td>
-                astropy.config
-            </td>
-            <td align='center'>
-                <span class="mature"></span>
-            </td>
-            <td>
-                Configuration received major overhaul in v0.4. Since then on, the package has been stable.
+                New in v1.0.
             </td>
         </tr>
         <tr>
@@ -125,7 +98,7 @@ The current planned and existing sub-packages are:
             <td>
                 New top-level package in v0.3 (was previously part of
                 <tt class="docutils literal"><span class="pre">astropy.nddata</span></tt>).
-                No major changes since, but possible future additions or improvements.
+                No major changes since, likely will maintain backwards compatibility but possible future additions or improvements.
             </td>
         </tr>
         <tr>
@@ -220,6 +193,17 @@ The current planned and existing sub-packages are:
         </tr>
         <tr>
             <td>
+                astropy.photometry
+            </td>
+            <td align='center'>
+                <span class="planned"></span>
+            </td>
+            <td>
+                &nbsp;
+            </td>
+        </tr>
+        <tr>
+            <td>
                 astropy.stats
             </td>
             <td align='center'>
@@ -260,7 +244,7 @@ The current planned and existing sub-packages are:
                 <span class="stable"></span>
             </td>
             <td>
-                New in v0.2. Current functionality stable with intent to maintain backwards compatibility. Significant new functionality, in particular to allow dealing with uncertainties, is likely to be added in future versions.
+                New in v0.2. Adapted from <tt class="docutils literal"><span class="pre">pnbody</span></tt> and integrated into Astropy. Current functionality stable with intent to maintain backwards compatibility. Significant new functionality is likely to be added in future versions.
             </td>
         </tr>
         <tr>
@@ -287,36 +271,13 @@ The current planned and existing sub-packages are:
         </tr>
         <tr>
             <td>
-                astropy.visualization.wcsaxes
+                astropy.vo
             </td>
             <td align='center'>
                 <span class="stable"></span>
             </td>
             <td>
-                New in v1.3. Originally developed as <tt class="docutils literal"><span class="pre">wcsaxes</span></tt> and has maintained a stable API.
-            </td>
-        </tr>
-        <tr>
-            <td>
-                astropy.samp
-            </td>
-            <td align='center'>
-                <span class="stable"></span>
-            </td>
-            <td>
-                Virtual Observatory service access: SAMP. This was renamed from astropy.vo.samp to astropy.samp in 2.0.
-            </td>
-        </tr>
-        <tr>
-            <td>
-                astropy.vo.client<br/>
-                astropy.vo.validator
-            </td>
-            <td align='center'>
-                <span class="deprecated"></span>
-            </td>
-            <td>
-                Virtual Observatory service access and validation: Simple Cone Search. This is deprecated in Astropy 2.0 and moved to Astroquery 0.3.5.
+                Virtual Observatory service access and validation. Currently, only Simple Cone Search and SAMP are supported.
             </td>
         </tr>
         <tr>

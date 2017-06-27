@@ -3,11 +3,10 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import pytest
 import numpy as np
 
 from numpy.random import randn
-from numpy.testing import assert_equal, assert_allclose
+from numpy.testing import assert_equal
 
 try:
     from scipy import stats  # used in testing
@@ -16,7 +15,9 @@ except ImportError:
 else:
     HAS_SCIPY = True
 
-from ..sigma_clipping import sigma_clip, SigmaClip, sigma_clipped_stats
+from ...tests.helper import pytest
+
+from ..sigma_clipping import sigma_clip, sigma_clipped_stats
 from ...utils.misc import NumpyRNGContext
 
 
@@ -88,15 +89,6 @@ def test_sigma_clip_scalar_mask():
     assert result.mask.shape != ()
 
 
-def test_sigma_clip_class():
-    with NumpyRNGContext(12345):
-        data = randn(100)
-        data[10] = 1.e5
-        sobj = SigmaClip(sigma=1, iters=2)
-        sfunc = sigma_clip(data, sigma=1, iters=2)
-        assert_equal(sobj(data), sfunc)
-
-
 def test_sigma_clipped_stats():
     """Test list data with input mask or mask_value (#3268)."""
     # test list data with mask
@@ -128,18 +120,6 @@ def test_sigma_clipped_stats():
     assert_equal(stddev, np.zeros_like(_data))
 
 
-def test_sigma_clipped_stats_ddof():
-    with NumpyRNGContext(12345):
-        data = randn(10000)
-        data[10] = 1.e5
-        mean1, median1, stddev1 = sigma_clipped_stats(data)
-        mean2, median2, stddev2 = sigma_clipped_stats(data, std_ddof=1)
-        assert mean1 == mean2
-        assert median1 == median2
-        assert_allclose(stddev1, 0.98156805711673156)
-        assert_allclose(stddev2, 0.98161731654802831)
-
-
 def test_invalid_sigma_clip():
     """Test sigma_clip of data containing invalid values."""
 
@@ -164,33 +144,3 @@ def test_sigmaclip_negative_axis():
     data = np.ones((3, 4))
     # without correct expand_dims this would raise a ValueError
     sigma_clip(data, axis=-1)
-
-
-def test_sigmaclip_fully_masked():
-    """Make sure a fully masked array is returned when sigma clipping a fully
-    masked array.
-    """
-
-    data = np.ma.MaskedArray(data=[[1., 0.], [0., 1.]],
-                             mask=[[True, True], [True, True]])
-    clipped_data = sigma_clip(data)
-    np.ma.allequal(data, clipped_data)
-
-
-def test_sigmaclip_empty_masked():
-    """Make sure a empty masked array is returned when sigma clipping an empty
-    masked array.
-    """
-
-    data = np.ma.MaskedArray(data=[], mask=[])
-    clipped_data = sigma_clip(data)
-    np.ma.allequal(data, clipped_data)
-
-
-def test_sigmaclip_empty():
-    """Make sure a empty array is returned when sigma clipping an empty array.
-    """
-
-    data = np.array([])
-    clipped_data = sigma_clip(data)
-    assert_equal(data, clipped_data)

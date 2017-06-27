@@ -530,26 +530,6 @@ encapsulate it in an :class:`HDUList` object first.
 Creating a New Table File
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. note::
-
-    If you want to create a simple **binary** FITS table with no other HDUs,
-    you can use :class:`~astropy.table.Table` instead and then write to FITS.
-    This is less complicated than "lower-level" FITS interface:
-
-    >>> from astropy.table import Table
-    >>> t = Table([[1, 2], [4, 5], [7, 8]], names=('a', 'b', 'c'))
-    >>> t.write('table.fits', format='fits')
-
-    The equivalent code using ``astropy.io.fits`` would look like this:
-
-    >>> from astropy.io import fits
-    >>> import numpy as np
-    >>> c1 = fits.Column(name='a', array=np.array([1, 2]), format='K')
-    >>> c2 = fits.Column(name='b', array=np.array([4, 5]), format='K')
-    >>> c3 = fits.Column(name='c', array=np.array([7, 8]), format='K')
-    >>> t = fits.BinTableHDU.from_columns([c1, c2, c3])
-    >>> t.writeto('table.fits')
-
 To create a table HDU is a little more involved than image HDU, because a
 table's structure needs more information. First of all, tables can only be an
 extension HDU, not a primary. There are two kinds of FITS table extensions:
@@ -567,12 +547,6 @@ numbers::
     >>> col1 = fits.Column(name='target', format='20A', array=a1)
     >>> col2 = fits.Column(name='V_mag', format='E', array=a2)
 
-.. note::
-
-    It is not necessary to create :class:`Column` object explicitly
-    if the data is stored in a
-    `structured array <https://docs.scipy.org/doc/numpy/user/basics.rec.html>`_.
-
 Next, create a :class:`ColDefs` (column-definitions) object for all columns::
 
     >>> cols = fits.ColDefs([col1, col2])
@@ -587,6 +561,7 @@ This function returns (in this case) a :class:`BinTableHDU`.
 Of course, you can do this more concisely without creating intermediate
 variables for the individual columns and without manually creating a
 :class:`ColDefs` object::
+
 
     >>> from astropy.io import fits
     >>> tbhdu = fits.BinTableHDU.from_columns(
@@ -749,19 +724,6 @@ the 3rd argument is not a header, it (and other positional arguments) are
 assumed to be the extension specification(s). Header and extension specs can
 also be keyword arguments.
 
-The :func:`printdiff` function will print a difference report of two FITS files,
-including headers and data. The first two arguments must be two FITS
-filenames or FITS file objects with matching data types (i.e., if using strings
-to specify filenames, both inputs must be strings).  The third
-argument is an optional extension specification, with the same call format
-of :func:`getheader` and :func:`getdata`.  In addition you can add any keywords
-accepted by the :class:`FITSDiff` class::
-
-  >>> # get a difference report of ext 2 of inA and inB
-  >>> printdiff('inA.fits', 'inB.fits', ext=2)
-  >>> # ignore HISTORY and COMMMENT keywords
-  >>> printdiff('inA.fits', 'inB.fits', ignore_keywords=('HISTORY','COMMENT')
-
 Finally, the :func:`info` function will print out information of the specified
 FITS file::
 
@@ -790,26 +752,6 @@ Using `astropy.io.fits`
    usage/unfamiliar
    usage/scripts
    usage/misc
-
-Command-line utilities
-======================
-
-For convenience, several of Astropy's subpackages install utility programs
-on your system which allow common tasks to be performed without having
-to open a Python interpreter. These utilities include:
-
-- `~astropy.io.fits.scripts.fitsheader`: prints the headers of a FITS file.
-
-- `~astropy.io.fits.scripts.fitscheck`: verifies and optionally re-writes
-  the CHECKSUM and DATASUM keywords of a FITS file.
-
-- :ref:`fitsdiff`: compares two FITS files and reports the differences.
-
-- :ref:`fits2bitmap`: converts FITS images to bitmaps, including scaling and
-  stretching.
-
-- :ref:`wcslint <wcslint>`: checks the :ref:`WCS <astropy-wcs>` keywords in a
-  FITS file for compliance against the standards.
 
 Other Information
 =================

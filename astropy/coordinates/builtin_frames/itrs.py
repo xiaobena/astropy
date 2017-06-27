@@ -4,8 +4,7 @@ from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
 
 from ..representation import CartesianRepresentation
-from ..baseframe import BaseCoordinateFrame
-from ..frame_attributes import TimeFrameAttribute
+from ..baseframe import BaseCoordinateFrame, TimeFrameAttribute
 from .utils import DEFAULT_OBSTIME
 
 

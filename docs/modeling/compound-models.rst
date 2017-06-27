@@ -1,7 +1,7 @@
 .. _compound-models:
 
 Compound Models
-***************
+===============
 
 .. versionadded:: 1.0
 
@@ -13,7 +13,7 @@ concatenation (explained below) with ``&``.
 
 
 Some terminology
-================
+----------------
 
 In discussing the compound model feature, it is useful to be clear about a
 few terms where there have been points of confusion:
@@ -80,7 +80,7 @@ few terms where there have been points of confusion:
 
 
 Creating compound models
-========================
+------------------------
 
 As discussed in the :ref:`introduction to compound models
 <compound-models-intro>`, the only way, currently, to create compound models is
@@ -95,7 +95,7 @@ other words, any object for which either ``isinstance(obj, Model)`` or
 .. _compound-model-classes:
 
 Compound model classes
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 We start by demonstrating how new compound model *classes* can be created
 by combining other classes.  This is more advanced usage, but it's useful to
@@ -176,15 +176,9 @@ In a future version it may be possible to "freeze" a compound model, so that
 from the user's perspective it is treated as a single model.  However, as this
 is the default behavior it is good to be aware of.
 
-One is also able to get the number of components (also known as submodels) in
-a compound model by accessing the method ``n_submodels``::
-
-    >>> FourGaussians.n_submodels()
-    4
-
 
 Model names
------------
+^^^^^^^^^^^
 
 In the last two examples another notable feature of the generated compound
 model classes is that the class name, as displayed when printing the class at
@@ -234,7 +228,7 @@ well.  This can be used to good effect, for example as shown in the section on
 .. _compound-model-instances:
 
 Compound models with model instances
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 So far we have seen how to create compound model *classes* from expressions
 involving other model classes.  This is the most "generic" way to create new
@@ -253,25 +247,6 @@ to be used for evaluation::
 
     >>> both_gaussians(0.2)  # doctest: +FLOAT_CMP
     0.6343031510582392
-
-In this case it is possible to directly assign a name to the compound model instance
-by using the `Model.name <astropy.modeling.Model.name>` attribute.
-
-    >>> both_gaussians.name = "BothGaussians"
-    >>> print(both_gaussians)  # doctest: +SKIP
-    Model: CompoundModel6
-    Name: BothGaussians
-    Inputs: ('x',)
-    Outputs: ('y',)
-    Model set size: 1
-    Expression: [0] + [1]
-    Components:
-        [0]: <Gaussian1D(amplitude=1.0, mean=0.0, stddev=0.2)>
-        [1]: <Gaussian1D(amplitude=2.5, mean=0.5, stddev=0.1)>
-    Parameters:
-        amplitude_0 mean_0 stddev_0 amplitude_1 mean_1 stddev_1
-        ----------- ------ -------- ----------- ------ --------
-                1.0    0.0      0.2         2.5    0.5      0.1
 
 This was found to be much more convenient and natural, in this case, than
 returning a class.  It is worth understanding that the way this works under the
@@ -349,10 +324,10 @@ should not have any practical drawbacks.
 
 
 Operators
-=========
+---------
 
 Arithmetic operators
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 Compound models can be created from expressions that include any
 number of the arithmetic operators ``+``, ``-``, ``*``, ``/``, and
@@ -380,7 +355,7 @@ arrays.
 .. _compound-model-composition:
 
 Model composition
------------------
+^^^^^^^^^^^^^^^^^
 
 The sixth binary operator that can be used to create compound models is the
 composition operator, also known as the "pipe" operator ``|`` (not to be
@@ -414,7 +389,7 @@ example, to create the following compound model:
     digraph {
         in0 [shape="none", label="input 0"];
         out0 [shape="none", label="output 0"];
-        redshift0 [shape="box", label="RedshiftScaleFactor"];
+        redshift0 [shape="box", label="Redshift"];
         gaussian0 [shape="box", label="Gaussian1D(1, 0.75, 0.1)"];
 
         in0 -> redshift0;
@@ -543,7 +518,7 @@ especially when used in concert with :ref:`mappings <compound-model-mappings>`.
 .. _compound-model-concatenation:
 
 Model concatenation
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 The concatenation operator ``&``, sometimes also referred to as a "join",
 combines two models into a single, fully separable transformation.  That is, it
@@ -632,7 +607,7 @@ transformation matrix::
 .. _compound-model-indexing:
 
 Indexing and slicing
-====================
+--------------------
 
 As seen in some of the previous examples in this document, when creating a
 compound model each component of the model is assigned an integer index
@@ -779,7 +754,7 @@ input we pass in, so 0 is used without loss of generality::
 .. _compound-model-parameters:
 
 Parameters
-==========
+----------
 
 A question that frequently comes up when first encountering compound models is
 how exactly all the parameters are dealt with.  By now we've seen a few
@@ -858,7 +833,7 @@ the original models.
 .. _compound-model-mappings:
 
 Advanced mappings
-=================
+-----------------
 
 We have seen in some previous examples how models can be chained together to
 form a "pipeline" of transformations by using model :ref:`composition

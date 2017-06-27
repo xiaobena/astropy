@@ -3,15 +3,15 @@
 from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
 
-import pytest
 import numpy as np
 from numpy.testing.utils import assert_allclose
-
-from ..core import Model, custom_model
+from ..core import Model, InputParameterError, custom_model
 from ..parameters import Parameter
 from .. import models
 
+from ...tests.helper import pytest, catch_warnings
 from ...utils.compat.funcsigs import signature
+from ...utils.exceptions import AstropyDeprecationWarning
 
 
 class NonFittableModel(Model):
@@ -104,9 +104,7 @@ def test_custom_model_signature():
     sig = signature(model_a.__init__)
     assert list(sig.parameters.keys()) == ['self', 'args', 'kwargs']
     sig = signature(model_a.__call__)
-    assert list(sig.parameters.keys()) == ['self', 'x', 'model_set_axis',
-                                           'with_bounding_box', 'fill_value',
-                                           'equivalencies']
+    assert list(sig.parameters.keys()) == ['self', 'x', 'model_set_axis']
 
     @custom_model
     def model_b(x, a=1, b=2):
@@ -118,9 +116,8 @@ def test_custom_model_signature():
     assert list(sig.parameters.keys()) == ['self', 'a', 'b', 'kwargs']
     assert [x.default for x in sig.parameters.values()] == [sig.empty, 1, 2, sig.empty]
     sig = signature(model_b.__call__)
-    assert list(sig.parameters.keys()) == ['self', 'x', 'model_set_axis',
-                                           'with_bounding_box', 'fill_value',
-                                           'equivalencies']
+    assert list(sig.parameters.keys()) == ['self', 'x', 'model_set_axis']
+
     @custom_model
     def model_c(x, y, a=1, b=2):
         return x + y + a + b
@@ -131,9 +128,7 @@ def test_custom_model_signature():
     assert list(sig.parameters.keys()) == ['self', 'a', 'b', 'kwargs']
     assert [x.default for x in sig.parameters.values()] == [sig.empty, 1, 2, sig.empty]
     sig = signature(model_c.__call__)
-    assert list(sig.parameters.keys()) == ['self', 'x', 'y', 'model_set_axis',
-                                           'with_bounding_box', 'fill_value',
-                                           'equivalencies']
+    assert list(sig.parameters.keys()) == ['self', 'x', 'y', 'model_set_axis']
 
 
 def test_custom_model_subclass():
@@ -157,9 +152,7 @@ def test_custom_model_subclass():
     sig = signature(model_b.__init__)
     assert list(sig.parameters.keys()) == ['self', 'a', 'kwargs']
     sig = signature(model_b.__call__)
-    assert list(sig.parameters.keys()) == ['self', 'x', 'model_set_axis',
-                                           'with_bounding_box', 'fill_value',
-                                           'equivalencies']
+    assert list(sig.parameters.keys()) == ['self', 'x', 'model_set_axis']
 
 
 def test_custom_model_parametrized_decorator():
@@ -195,7 +188,11 @@ def test_custom_inverse():
     assert_allclose(x, p(p.inverse(x)))
     assert_allclose(x, p.inverse(p(x)))
 
-    p.inverse = None
+    with catch_warnings(AstropyDeprecationWarning) as w:
+        p.inverse = None
+
+    # TODO: This can be removed after Astropy v1.1 or so
+    assert len(w) == 1
 
     with pytest.raises(NotImplementedError):
         p.inverse
@@ -345,30 +342,3 @@ def test_render_model_3d():
                 if (z0, y0, x0) == (8, 10, 13):
                     boxed = model.render()
                     assert (np.sum(expected) - np.sum(boxed)) == 0
-
-
-def test_custom_bounding_box_1d():
-    """
-    Tests that the bounding_box setter works.
-    """
-    # 1D models
-    g1 = models.Gaussian1D()
-    bb = g1.bounding_box
-    expected = g1.render()
-
-    # assign the same bounding_box, now through the bounding_box setter
-    g1.bounding_box = bb
-    assert_allclose(g1.render(), expected)
-
-    # 2D models
-    g2 = models.Gaussian2D()
-    bb = g2.bounding_box
-    expected = g2.render()
-
-    # assign the same bounding_box, now through the bounding_box setter
-    g2.bounding_box = bb
-    assert_allclose(g2.render(), expected)
-
-def test_n_submodels_in_single_models():
-    assert models.Gaussian1D.n_submodels() == 1
-    assert models.Gaussian2D.n_submodels() == 1

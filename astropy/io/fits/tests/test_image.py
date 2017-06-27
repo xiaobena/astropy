@@ -4,31 +4,21 @@ from __future__ import division, with_statement
 
 import math
 import os
-import platform
 import re
 import time
 import warnings
 
-import pytest
 import numpy as np
-from numpy.testing import assert_equal
 
 from ....extern.six.moves import range
 from ....io import fits
 from ....utils.exceptions import AstropyPendingDeprecationWarning
-from ....utils.compat import NUMPY_LT_1_12
-from ....tests.helper import raises, catch_warnings, ignore_warnings
+from ....utils.compat import NUMPY_LT_1_10
+from ....tests.helper import pytest, raises, catch_warnings, ignore_warnings
 from ..hdu.compressed import SUBTRACTIVE_DITHER_1, DITHER_SEED_CHECKSUM
 from .test_table import comparerecords
 
 from . import FitsTestCase
-
-try:
-    import scipy  # pylint: disable=W0611
-except ImportError:
-    HAS_SCIPY = False
-else:
-    HAS_SCIPY = True
 
 
 class TestImageFunctions(FitsTestCase):
@@ -73,6 +63,7 @@ class TestImageFunctions(FitsTestCase):
         # Original header should be unchanged
         assert phdr['FILENAME'] == 'labq01i3q_rawtag.fits'
 
+    @raises(ValueError)
     def test_open(self):
         # The function "open" reads a FITS file into an HDUList object.  There
         # are three modes to open: "readonly" (the default), "append", and
@@ -85,15 +76,7 @@ class TestImageFunctions(FitsTestCase):
         # data parts are latent instantiation, so if we close the HDUList
         # without touching data, data can not be accessed.
         r.close()
-
-        with pytest.raises(IndexError) as exc_info:
-            r[1].data[:2, :2]
-
-        # Check that the exception message is the enhanced version, not the
-        # default message from list.__getitem__
-        assert str(exc_info.value) == ('HDU not found, possibly because the index '
-                                       'is out of range, or because the file was '
-                                       'closed before all HDUs were read')
+        r[1].data[:2, :2]
 
     def test_open_2(self):
         r = fits.open(self.data('test0.fits'))
@@ -106,40 +89,6 @@ class TestImageFunctions(FitsTestCase):
             assert r.info(output=False) == info
         finally:
             r.close()
-
-    def test_open_3(self):
-        # Test that HDUs cannot be accessed after the file was closed
-        r = fits.open(self.data('test0.fits'))
-        r.close()
-        with pytest.raises(IndexError) as exc_info:
-            r[1]
-
-        # Check that the exception message is the enhanced version, not the
-        # default message from list.__getitem__
-        assert str(exc_info.value) == ('HDU not found, possibly because the index '
-                                       'is out of range, or because the file was '
-                                       'closed before all HDUs were read')
-
-        # Test that HDUs can be accessed with lazy_load_hdus=False
-        r = fits.open(self.data('test0.fits'), lazy_load_hdus=False)
-        r.close()
-        assert isinstance(r[1], fits.ImageHDU)
-        assert len(r) == 5
-
-        with pytest.raises(IndexError) as exc_info:
-            r[6]
-        assert str(exc_info.value) == 'list index out of range'
-
-        # And the same with the global config item
-        assert fits.conf.lazy_load_hdus  # True by default
-        fits.conf.lazy_load_hdus = False
-        try:
-            r = fits.open(self.data('test0.fits'))
-            r.close()
-            assert isinstance(r[1], fits.ImageHDU)
-            assert len(r) == 5
-        finally:
-            fits.conf.lazy_load_hdus = True
 
     def test_primary_with_extname(self):
         """Regression test for https://aeon.stsci.edu/ssb/trac/pyfits/ticket/151
@@ -169,8 +118,6 @@ class TestImageFunctions(FitsTestCase):
         with fits.open(self.temp('test.fits')) as hdul:
             assert hdul[0].name == 'XPRIMARY2'
 
-    @pytest.mark.xfail(platform.system() == 'Windows' and not NUMPY_LT_1_12,
-                              reason='https://github.com/astropy/astropy/issues/5797')
     def test_io_manipulation(self):
         # Get a keyword value.  An extension can be referred by name or by
         # number.  Both extension and keyword names are case insensitive.
@@ -702,11 +649,12 @@ class TestImageFunctions(FitsTestCase):
             tmp_uint = fits.PrimaryHDU(arr)
             filename = 'unsigned_int.fits'
             tmp_uint.writeto(self.temp(filename))
-            with fits.open(self.temp(filename),
-                           do_not_scale_image_data=do_not_scale) as f:
-                uint_hdu = f[0]
-                # Force a read before we close.
-                _ = uint_hdu.data
+            f = fits.open(self.temp(filename),
+                          do_not_scale_image_data=do_not_scale)
+
+            uint_hdu = f[0]
+            # Force a read before we close.
+            _ = uint_hdu.data
         else:
             uint_hdu = fits.PrimaryHDU(arr,
                                        do_not_scale_image_data=do_not_scale)
@@ -1130,36 +1078,6 @@ class TestCompressedImage(FitsTestCase):
             assert fd[1].header['NAXIS2'] == chdu.header['NAXIS2']
             assert fd[1].header['BITPIX'] == chdu.header['BITPIX']
 
-    @pytest.mark.skipif('not HAS_SCIPY')
-    def test_comp_image_quantize_level(self):
-        """
-        Regression test for https://github.com/astropy/astropy/issues/5969
-
-        Test that quantize_level is used.
-
-        """
-        import scipy.misc
-        np.random.seed(42)
-        data = scipy.misc.ascent() + np.random.randn(512, 512)*10
-
-        fits.ImageHDU(data).writeto(self.temp('im1.fits'))
-        fits.CompImageHDU(data, compression_type='RICE_1', quantize_method=1,
-                          quantize_level=-1, dither_seed=5)\
-            .writeto(self.temp('im2.fits'))
-        fits.CompImageHDU(data, compression_type='RICE_1', quantize_method=1,
-                          quantize_level=-100, dither_seed=5)\
-            .writeto(self.temp('im3.fits'))
-
-        im1 = fits.getdata(self.temp('im1.fits'))
-        im2 = fits.getdata(self.temp('im2.fits'))
-        im3 = fits.getdata(self.temp('im3.fits'))
-
-        assert not np.array_equal(im2, im3)
-        assert np.isclose(np.min(im1 - im2), -0.5, atol=1e-3)
-        assert np.isclose(np.max(im1 - im2), 0.5, atol=1e-3)
-        assert np.isclose(np.min(im1 - im3), -50, atol=1e-1)
-        assert np.isclose(np.max(im1 - im3), 50, atol=1e-1)
-
     @ignore_warnings(AstropyPendingDeprecationWarning)
     def test_comp_image_hcompression_1_invalid_data(self):
         """
@@ -1189,9 +1107,7 @@ class TestCompressedImage(FitsTestCase):
         hdu.writeto(self.temp('test.fits'))
 
         with fits.open(self.temp('test.fits')) as hdul:
-            # HCOMPRESSed images are allowed to deviate from the original by
-            # about 1/quantize_level of the RMS in each tile.
-            assert np.abs(hdul['SCI'].data - cube).max() < 1./15.
+            assert (hdul['SCI'].data == cube).all()
 
     def test_subtractive_dither_seed(self):
         """
@@ -1555,20 +1471,6 @@ class TestCompressedImage(FitsTestCase):
             assert 'ZHECKSUM' in tblhdr
             assert tblhdr['ZHECKSUM'] == 'abcd1234'
 
-    def test_compression_header_append2(self):
-        """
-        Regresion test for issue https://github.com/astropy/astropy/issues/5827
-        """
-        with fits.open(self.data('comp.fits')) as hdul:
-            header = hdul[1].header
-            while (len(header) < 1000):
-                header.append()    # pad with grow room
-
-            # Append stats to header:
-            header.append(("Q1_OSAVG", 1, "[adu] quadrant 1 overscan mean"))
-            header.append(("Q1_OSSTD", 1, "[adu] quadrant 1 overscan stddev"))
-            header.append(("Q1_OSMED", 1, "[adu] quadrant 1 overscan median"))
-
     def test_compression_header_insert(self):
         with fits.open(self.data('comp.fits')) as hdul:
             imghdr = hdul[1].header
@@ -1726,17 +1628,6 @@ class TestCompressedImage(FitsTestCase):
             hdul[1].data[:] = 0
             assert np.allclose(hdul[1].data, 0)
 
-    def test_compressed_header_missing_znaxis(self):
-        a = np.arange(100, 200, dtype=np.uint16)
-        comp_hdu = fits.CompImageHDU(a)
-        comp_hdu._header.pop('ZNAXIS')
-        with pytest.raises(TypeError):
-            comp_hdu.compressed_data
-        comp_hdu = fits.CompImageHDU(a)
-        comp_hdu._header.pop('ZBITPIX')
-        with pytest.raises(TypeError):
-            comp_hdu.compressed_data
-
 
 def test_comphdu_bscale(tmpdir):
     """
@@ -1793,7 +1684,6 @@ def test_bzero_implicit_casting_compressed():
     hdu = fits.open(filename)[1]
     hdu.data
 
-
 def test_bzero_mishandled_info(tmpdir):
     # Regression test for #5507:
     # Calling HDUList.info() on a dataset which applies a zeropoint
@@ -1802,37 +1692,6 @@ def test_bzero_mishandled_info(tmpdir):
     filename = tmpdir.join('floatimg_with_bzero.fits').strpath
     hdu = fits.ImageHDU(np.zeros((10, 10)))
     hdu.header['BZERO'] = 10
-    hdu.writeto(filename, overwrite=True)
+    hdu.writeto(filename, clobber=True)
     hdul = fits.open(filename)
     hdul.info()
-
-
-def test_image_write_readonly(tmpdir):
-
-    # Regression test to make sure that we can write out read-only arrays (#5512)
-
-    x = np.array([1,2,3])
-    x.setflags(write=False)
-    ghdu = fits.ImageHDU(data=x)
-    ghdu.add_datasum()
-
-    filename = tmpdir.join('test.fits').strpath
-
-    ghdu.writeto(filename)
-
-    with fits.open(filename) as hdulist:
-        assert_equal(hdulist[1].data, [1, 2, 3])
-
-    # Same for compressed HDU
-    x = np.array([1.0, 2.0, 3.0])
-    x.setflags(write=False)
-    ghdu = fits.CompImageHDU(data=x)
-    # add_datasum does not work for CompImageHDU
-    # ghdu.add_datasum()
-
-    filename = tmpdir.join('test2.fits').strpath
-
-    ghdu.writeto(filename)
-
-    with fits.open(filename) as hdulist:
-        assert_equal(hdulist[1].data, [1.0, 2.0, 3.0])

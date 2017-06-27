@@ -1,8 +1,8 @@
 .. _documentation-guidelines:
 
-*********************
+=====================
 Writing Documentation
-*********************
+=====================
 
 High-quality, consistent documentation for astronomy code is one of
 the major goals of the Astropy project.  Hence, we describe our
@@ -15,14 +15,14 @@ often lacking in professional astronomy software.)
 
 
 Building the Documentation from source
-======================================
+--------------------------------------
 
 For information about building the documentation from source, see
 the :ref:`builddocs` section in the installation instructions.
 
 
 Astropy Documentation Rules and Guidelines
-==========================================
+------------------------------------------
 
 This section describes the standards for documentation format affiliated
 packages that must follow for consideration of integration into the core
@@ -57,16 +57,17 @@ The details of the docstring format are described on a separate page:
 
 
 Sphinx Documentation Themes
-===========================
+---------------------------
 
-A custom Sphinx HTML theme is included in the `astropy-helpers`_ package. 
-This allows the
+A custom Sphinx HTML theme is included in the `astropy-helpers`_ package (it is
+also included in Astropy's source package, but this will be removed after v0.4
+and subsequently only be available through astropy-helpers). This allows the
 theme to be used by both Astropy and affiliated packages. This is done by
 setting the theme in the global Astropy sphinx configuration, which is imported
 in the sphinx configuration of both Astropy and affiliated packages.
 
 Using a different theme for ``astropy`` or affiliated packages
---------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A different theme can be used by overriding a few sphinx
 configuration variables set in the global configuration.
@@ -82,7 +83,7 @@ configuration variables set in the global configuration.
   details on theming.
 
 Adding more custom themes to astropy
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Additional custom themes can be included in the astropy source tree by
 placing them in the directory ``astropy/astropy/sphinx/themes``, and
@@ -92,33 +93,41 @@ editing ``astropy/astropy/sphinx/setup_package.py`` to include the theme
 
 
 Sphinx extensions
-=================
+-----------------
 
 Astropy-helpers includes a number of sphinx extensions that are used in Astropy
 and its affiliated packages to facilitate easily documenting code in a
 homogeneous and readable way.
 
+.. note::
+
+  These extensions are also included with Astropy itself in v0.4 and
+  below, to facilitate backwards-compatibility for existing affiliated
+  packages.  The versions actually in astropy will not receive further
+  updates, however, and will likely be removed in a future version. So
+  we strongly recommend using the astropy-helper versions instead.
+
 
 automodapi Extension
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: astropy_helpers.sphinx.ext.automodapi
 
 
 automodsumm Extension
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: astropy_helpers.sphinx.ext.automodsumm
 
 
 edit_on_github Extension
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: astropy_helpers.sphinx.ext.edit_on_github
 
 
 numpydoc Extension
-------------------
+^^^^^^^^^^^^^^^^^^
 This extension (and some related extensions) are a port of the
 `numpydoc <http://pypi.python.org/pypi/numpydoc/0.3.1>`_ extension
 written by the NumPy_ and SciPy_, projects, with some tweaks for
@@ -129,7 +138,7 @@ processed automatically.
 
 
 Other Extensions
-----------------
+^^^^^^^^^^^^^^^^
 
 ``astropy_helpers.sphinx.ext`` includes a few other extensions that are
 primarily helpers for the other extensions or workarounds for undesired

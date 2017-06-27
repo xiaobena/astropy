@@ -2,13 +2,12 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import io
-
-import pytest
-
-from ..xml import check, unescaper, writer
 from ...extern import six
 
+import io
+
+from ..xml import check, unescaper, writer
+from ...tests.helper import pytest
 
 
 def test_writer():

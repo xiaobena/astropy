@@ -3,18 +3,15 @@
 import glob
 import io
 import os
-import platform
 import sys
 
-import pytest
 import numpy as np
 
 from ..verify import VerifyError
 from ....extern.six.moves import range
 from ....io import fits
-from ....tests.helper import raises, catch_warnings, ignore_warnings
+from ....tests.helper import pytest, raises, catch_warnings, ignore_warnings
 from ....utils.exceptions import AstropyUserWarning, AstropyDeprecationWarning
-from ....utils.compat import NUMPY_LT_1_12
 
 from . import FitsTestCase
 
@@ -436,52 +433,6 @@ class TestHDUListFunctions(FitsTestCase):
         assert 'EXTEND' in hdul[0].header
         assert hdul[0].header['EXTEND'] is True
 
-    def test_fix_malformed_naxisj(self):
-        """
-        Tests that malformed NAXISj values are fixed sensibly.
-        """
-
-        hdu = fits.open(self.data('arange.fits'))
-
-        # Malform NAXISj header data
-        hdu[0].header['NAXIS1'] = 11.0
-        hdu[0].header['NAXIS2'] = '10.0'
-        hdu[0].header['NAXIS3'] = '7'
-
-        # Axes cache needs to be malformed as well
-        hdu[0]._axes = [11.0, '10.0', '7']
-
-        # Perform verification including the fix
-        hdu.verify('silentfix')
-
-        # Check that malformed data was converted
-        assert hdu[0].header['NAXIS1'] == 11
-        assert hdu[0].header['NAXIS2'] == 10
-        assert hdu[0].header['NAXIS3'] == 7
-
-    def test_fix_wellformed_naxisj(self):
-        """
-        Tests that wellformed NAXISj values are not modified.
-        """
-
-        hdu = fits.open(self.data('arange.fits'))
-
-        # Fake new NAXISj header data
-        hdu[0].header['NAXIS1'] = 768
-        hdu[0].header['NAXIS2'] = 64
-        hdu[0].header['NAXIS3'] = 8
-
-        # Axes cache needs to be faked as well
-        hdu[0]._axes = [768, 64, 8]
-
-        # Perform verification including the fix
-        hdu.verify('silentfix')
-
-        # Check that malformed data was converted
-        assert hdu[0].header['NAXIS1'] == 768
-        assert hdu[0].header['NAXIS2'] == 64
-        assert hdu[0].header['NAXIS3'] == 8
-
     def test_new_hdulist_extend_keyword(self):
         """Regression test for https://aeon.stsci.edu/ssb/trac/pyfits/ticket/114
 
@@ -577,9 +528,6 @@ class TestHDUListFunctions(FitsTestCase):
         with fits.open(self.temp('temp.fits')) as hdul:
             assert (hdul[0].data == data).all()
 
-
-    @pytest.mark.xfail(platform.system() == 'Windows' and not NUMPY_LT_1_12,
-                       reason='https://github.com/astropy/astropy/issues/5797')
     def test_update_resized_header(self):
         """
         Test saving updates to a file where the header is one block smaller
@@ -843,7 +791,7 @@ class TestHDUListFunctions(FitsTestCase):
             hdulist.writeto(self.temp('test_overwrite.fits'), clobber=True)
             assert warning_lines[0].category == AstropyDeprecationWarning
             assert (str(warning_lines[0].message) == '"clobber" was '
-                    'deprecated in version 2.0 and will be removed in a '
+                    'deprecated in version 1.3 and will be removed in a '
                     'future version. Use argument "overwrite" instead.')
 
     def test_invalid_hdu_key_in_contains(self):

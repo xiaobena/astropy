@@ -18,9 +18,8 @@ import sys
 import gzip
 
 # THIRD-PARTY
-import pytest
-import numpy as np
 from numpy.testing import assert_array_equal
+import numpy as np
 
 # LOCAL
 from ..table import parse, parse_single_table, validate
@@ -28,7 +27,7 @@ from .. import tree
 from ..exceptions import VOTableSpecError, VOWarning
 from ..xmlutil import validate_schema
 from ....utils.data import get_pkg_data_filename, get_pkg_data_filenames
-from ....tests.helper import raises, catch_warnings
+from ....tests.helper import pytest, raises, catch_warnings
 
 try:
     import pathlib
@@ -738,10 +737,13 @@ def table_from_scratch():
 
 
 def test_open_files():
+    def test_file(filename):
+        parse(filename, pedantic=False)
+
     for filename in get_pkg_data_filenames('data', pattern='*.xml'):
         if filename.endswith('custom_datatype.xml'):
             continue
-        parse(filename, pedantic=False)
+        yield test_file, filename
 
 
 @raises(VOTableSpecError)

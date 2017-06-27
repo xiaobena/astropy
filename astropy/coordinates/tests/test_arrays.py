@@ -6,18 +6,17 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import pytest
+from ...tests.helper import pytest, assert_quantity_allclose as assert_allclose
+
 import numpy as np
 from numpy import testing as npt
 
 from ... import units as u
 from ...time import Time
-from ...tests.helper import assert_quantity_allclose as assert_allclose
 
-from .. import (Angle, ICRS, FK4, FK5, Galactic, SkyCoord,
+from .. import (Angle, ICRS, FK4, FK5, Galactic, SkyCoord, get_sun,
                 CartesianRepresentation)
 from ..angle_utilities import dms_to_degrees, hms_to_hours
-
 
 def test_angle_arrays():
     """

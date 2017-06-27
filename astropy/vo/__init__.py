@@ -7,9 +7,6 @@ functionality.
 from .. import config as _config
 
 
-# NOTE: This is deprecated along with other Cone Search stuff, but it feels
-#       weird for config item to be issuing deprecation warnings.
-
 class Conf(_config.ConfigNamespace):
     """
     Configuration parameters for `astropy.vo`.

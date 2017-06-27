@@ -17,8 +17,7 @@ from numpy import ma
 from .. import log
 from ..io import registry as io_registry
 from ..units import Quantity
-from ..utils import isiterable, ShapedLikeNDArray
-from ..utils.compat.numpy import broadcast_to as np_broadcast_to
+from ..utils import isiterable, deprecated
 from ..utils.console import color_print
 from ..utils.metadata import MetaData
 from ..utils.data_info import BaseColumnInfo, MixinInfo, ParentDtypeInfo, DataInfo
@@ -110,8 +109,6 @@ class TableColumns(OrderedDict):
             return OrderedDict.__getitem__(self, item)
         elif isinstance(item, (int, np.integer)):
             return self.values()[item]
-        elif (isinstance(item, np.ndarray) and item.shape == () and item.dtype.kind == 'i'):
-            return self.values()[item.item()]
         elif isinstance(item, tuple):
             return self.__class__([self[x] for x in item])
         elif isinstance(item, slice):
@@ -150,39 +147,6 @@ class TableColumns(OrderedDict):
     def values(self):
         return list(OrderedDict.values(self))
 
-    def isinstance(self, cls):
-        """
-        Return a list of columns which are instances of the specified classes.
-
-        Parameters
-        ----------
-        cls : class or tuple of classes
-            Column class (including mixin) or tuple of Column classes.
-
-        Returns
-        -------
-        col_list : list of Columns
-            List of Column objects which are instances of given classes.
-        """
-        cols = [col for col in self.values() if isinstance(col, cls)]
-        return cols
-
-    def not_isinstance(self, cls):
-        """
-        Return a list of columns which are not instances of the specified classes.
-
-        Parameters
-        ----------
-        cls : class or tuple of classes
-            Column class (including mixin) or tuple of Column classes.
-
-        Returns
-        -------
-        col_list : list of Columns
-            List of Column objects which are not instances of given classes.
-        """
-        cols = [col for col in self.values() if not isinstance(col, cls)]
-        return cols
 
 class Table(object):
     """A class to represent tables of heterogeneous data.
@@ -205,19 +169,19 @@ class Table(object):
     masked : bool, optional
         Specify whether the table is masked.
     names : list, optional
-        Specify column names.
+        Specify column names
     dtype : list, optional
-        Specify column data types.
+        Specify column data types
     meta : dict, optional
         Metadata associated with the table.
     copy : bool, optional
-        Copy the input data. Default is True.
+        Copy the input data (default=True).
     rows : numpy ndarray, list of lists, optional
-        Row-oriented data for table instead of ``data`` argument.
+        Row-oriented data for table instead of ``data`` argument
     copy_indices : bool, optional
-        Copy any indices in the input data. Default is True.
+        Copy any indices in the input data (default=True)
     **kwargs : dict, optional
-        Additional keyword args when converting table-like object.
+        Additional keyword args when converting table-like object
 
     .. note::
         If the input is a Table the ``meta`` is always copied regardless of the
@@ -233,6 +197,18 @@ class Table(object):
     MaskedColumn = MaskedColumn
     TableColumns = TableColumns
     TableFormatter = TableFormatter
+
+    @property
+    @deprecated('0.4', alternative=':attr:`Table.as_array`')
+    def _data(self):
+        """
+        Return a new copy of the table in the form of a structured np.ndarray or
+        np.ma.MaskedArray object (as appropriate).
+
+        Prior to version 1.0 of astropy this private property was a modifiable
+        view of the table data, but since 1.0 it is a copy.
+        """
+        return self.as_array()
 
     def as_array(self, keep_byteorder=False):
         """
@@ -520,8 +496,8 @@ class Table(object):
             Indexing engine class to use, from among SortedArray, BST,
             FastBST, and FastRBT. If the supplied argument is None (by
             default), use SortedArray.
-        unique : bool
-            Whether the values of the index must be unique. Default is False.
+        unique : bool (defaults to False)
+            Whether the values of the index must be unique
         '''
         if isinstance(colnames, six.string_types):
             colnames = (colnames,)
@@ -886,7 +862,7 @@ class Table(object):
     def has_mixin_columns(self):
         """
         True if table has any mixin columns (defined as columns that are not Column
-        subclasses).
+        subclasses)
         """
         return any(has_info_class(col, MixinInfo) for col in self.columns.values())
 
@@ -919,13 +895,13 @@ class Table(object):
         Parameters
         ----------
         max_lines : int
-            Maximum number of lines in table output.
+            Maximum number of lines in table output
 
         max_width : int or `None`
-            Maximum character width of output.
+            Maximum character width of output
 
         show_name : bool
-            Include a header row for column names. Default is True.
+            Include a header row for column names (default=True)
 
         show_unit : bool
             Include a header row for unit.  Default is to show a row
@@ -933,7 +909,7 @@ class Table(object):
             for the unit.
 
         show_dtype : bool
-            Include a header row for column dtypes. Default is True.
+            Include a header row for column dtypes (default=True)
 
         align : str or list or tuple or `None`
             Left/right alignment of columns. Default is right (None) for all
@@ -984,7 +960,7 @@ class Table(object):
             notebook.  See `this page <http://getbootstrap.com/css/#tables>`_
             for the list of classes.
         css : string
-            A valid CSS string declaring the formatting for the table. Defaults
+            A valid CSS string declaring the formatting for the table. Default
             to ``astropy.table.jsviewer.DEFAULT_CSS_NB``.
         display_length : int, optional
             Number or rows to show. Defaults to 50.
@@ -1023,10 +999,7 @@ class Table(object):
                                          max_lines=-1, show_dtype=False,
                                          tableclass=table_class)
 
-        columns = display_table.columns.values()
-        sortable_columns = [i for i, col in enumerate(columns)
-                            if col.dtype.kind in 'iufc']
-        html += jsv.ipynb(tableid, css=css, sort_columns=sortable_columns)
+        html += jsv.ipynb(tableid, css=css)
         return HTML(html)
 
     def show_in_browser(self, max_lines=5000, jsviewer=False,
@@ -1134,7 +1107,7 @@ class Table(object):
             Maximum character width of output
 
         show_name : bool
-            Include a header row for column names. Default is True.
+            Include a header row for column names (default=True)
 
         show_unit : bool
             Include a header row for unit.  Default is to show a row
@@ -1142,10 +1115,10 @@ class Table(object):
             for the unit.
 
         show_dtype : bool
-            Include a header row for column dtypes. Default is True.
+            Include a header row for column dtypes (default=True)
 
         html : bool
-            Format the output as an HTML table. Default is False.
+            Format the output as an HTML table (default=False)
 
         tableid : str or `None`
             An ID tag for the table; only used if html is set.  Default is
@@ -1161,12 +1134,12 @@ class Table(object):
 
         tableclass : str or list of str or `None`
             CSS classes for the table; only used if html is set.  Default is
-            None.
+            none
 
         Returns
         -------
         lines : list
-            Formatted table as a list of strings.
+            Formatted table as a list of strings
 
         """
 
@@ -1205,7 +1178,7 @@ class Table(object):
             Maximum character width of output
 
         show_name : bool
-            Include a header row for column names. Default is True.
+            Include a header row for column names (default=True)
 
         show_unit : bool
             Include a header row for unit.  Default is to show a row
@@ -1213,7 +1186,7 @@ class Table(object):
             for the unit.
 
         show_dtype : bool
-            Include a header row for column dtypes. Default is True.
+            Include a header row for column dtypes (default=True)
         """
         self.formatter._more_tabcol(self, max_lines, max_width, show_name=show_name,
                                     show_unit=show_unit, show_dtype=show_dtype)
@@ -1223,8 +1196,6 @@ class Table(object):
             return self.columns[item]
         elif isinstance(item, (int, np.integer)):
             return self.Row(self, item)
-        elif (isinstance(item, np.ndarray) and item.shape == () and item.dtype.kind == 'i'):
-            return self.Row(self, item.item())
         elif (isinstance(item, (tuple, list)) and item and
               all(isinstance(x, six.string_types) for x in item)):
             bad_names = [x for x in item if x not in self.colnames]
@@ -1237,7 +1208,7 @@ class Table(object):
             out._groups = groups.TableGroups(out, indices=self.groups._indices,
                                              keys=self.groups._keys)
             return out
-        elif ((isinstance(item, np.ndarray) and item.size == 0) or
+        elif ((isinstance(item, np.ndarray) and len(item) == 0) or
               (isinstance(item, (tuple, list)) and not item)):
             # If item is an empty array/list/tuple then return the table with no rows
             return self._new_from_slice([])
@@ -1278,29 +1249,17 @@ class Table(object):
             name = item
             # If this is a column-like object that could be added directly to table
             if isinstance(value, BaseColumn) or self._add_as_mixin_column(value):
-                # If we're setting a new column to a scalar, broadcast it.
-                # (things will fail in _init_from_cols if this doesn't work)
-                if (len(self) > 0 and (getattr(value, 'isscalar', False) or
-                                       getattr(value, 'shape', None) == () or
-                                       len(value) == 1)):
-                    new_shape = (len(self),) + getattr(value, 'shape', ())[1:]
-                    if isinstance(value, np.ndarray):
-                        value = np_broadcast_to(value, shape=new_shape,
-                                                subok=True)
-                    elif isinstance(value, ShapedLikeNDArray):
-                        value = value._apply(np_broadcast_to, shape=new_shape,
-                                             subok=True)
-
                 new_column = col_copy(value)
                 new_column.info.name = name
-
             elif len(self) == 0:
                 new_column = NewColumn(value, name=name)
             else:
                 new_column = NewColumn(name=name, length=len(self), dtype=value.dtype,
-                                       shape=value.shape[1:],
-                                       unit=getattr(value, 'unit', None))
+                                       shape=value.shape[1:])
                 new_column[:] = value
+
+                if isinstance(value, Quantity):
+                    new_column.unit = value.unit
 
             # Now add new column to the table
             self.add_columns([new_column], copy=False)
@@ -1478,7 +1437,7 @@ class Table(object):
         except ValueError:
             raise ValueError("Column {0} does not exist".format(name))
 
-    def add_column(self, col, index=None, name=None, rename_duplicate=False):
+    def add_column(self, col, index=None, rename_duplicate=False):
         """
         Add a new Column object ``col`` to the table.  If ``index``
         is supplied then insert column before ``index`` position
@@ -1490,11 +1449,9 @@ class Table(object):
         col : Column
             Column object to add.
         index : int or `None`
-            Insert column before this position or at end (default).
-        name : str
-            Column name
+            Insert column before this position or at end (default)
         rename_duplicate : bool
-            Uniquify column name if it already exist. Default is False.
+            Uniquify column name if it already exist (default=False)
 
         Examples
         --------
@@ -1543,31 +1500,13 @@ class Table(object):
               2 0.2 1.2
               3 0.3 1.3
 
-        Add an unnamed column or mixin object in the table using a default name
-        or by specifying an explicit name with ``name``. Name can also be overridden::
-
-            >>> t = Table([[1, 2], [0.1, 0.2]], names=('a', 'b'))
-            >>> col_c = Column(data=['x', 'y'])
-            >>> t.add_column(col_c)
-            >>> t.add_column(col_c, name='c')
-            >>> col_b = Column(name='b', data=[1.1, 1.2])
-            >>> t.add_column(col_b, name='d')
-            >>> print(t)
-             a   b  col2  c   d
-            --- --- ---- --- ---
-              1 0.1    x   x 1.1
-              2 0.2    y   y 1.2
-
         To add several columns use add_columns.
         """
         if index is None:
             index = len(self.columns)
-        if name is not None:
-            name = (name,)
+        self.add_columns([col], [index], rename_duplicate=rename_duplicate)
 
-        self.add_columns([col], [index], name, rename_duplicate=rename_duplicate)
-
-    def add_columns(self, cols, indexes=None, names=None, copy=True, rename_duplicate=False):
+    def add_columns(self, cols, indexes=None, copy=True, rename_duplicate=False):
         """
         Add a list of new Column objects ``cols`` to the table.  If a
         corresponding list of ``indexes`` is supplied then insert column
@@ -1579,14 +1518,12 @@ class Table(object):
         cols : list of Columns
             Column objects to add.
         indexes : list of ints or `None`
-            Insert column before this position or at end (default).
-        names : list of str
-            Column names
+            Insert column before this position or at end (default)
         copy : bool
-            Make a copy of the new columns. Default is True.
+            Make a copy of the new columns (default=True)
         rename_duplicate : bool
-            Uniquify new column names if they duplicate the existing ones.
-            Default is False.
+            Uniquify new column names if they duplicate the existing ones
+            (default=False)
 
 
         Examples
@@ -1640,19 +1577,6 @@ class Table(object):
               2 0.2 1.2  y
               3 0.3 1.3  z
 
-        Add unnamed columns or mixin objects in the table using default names
-        or by specifying explicit names with ``names``. Names can also be overridden::
-
-            >>> t = Table()
-            >>> col_a = Column(data=['x', 'y'])
-            >>> col_b = Column(name='b', data=['u', 'v'])
-            >>> t.add_columns([col_a, col_b])
-            >>> t.add_columns([col_a, col_b], names=['c', 'd'])
-            >>> print(t)
-            col0  b   c   d
-            ---- --- --- ---
-               x   u   x   u
-               y   v   y   v
         """
         if indexes is None:
             indexes = [len(self.columns)] * len(cols)
@@ -1672,20 +1596,6 @@ class Table(object):
                 i = new_indexes.index(index)
                 new_indexes.insert(i, None)
                 newcols.insert(i, col)
-
-        if names is None:
-            names = (None,) * len(cols)
-        elif len(names) != len(cols):
-                raise ValueError('Number of names must match number of cols')
-
-        for i, (col, name) in enumerate(zip(cols, names)):
-            if name is None:
-                if col.info.name is not None:
-                    continue
-                name = 'col{}'.format(i + len(self.columns))
-            if col.info.parent_table is not None:
-                col = col_copy(col)
-            col.info.name = name
 
         if rename_duplicate:
             existing_names = set(self.colnames)
@@ -2327,7 +2237,7 @@ class Table(object):
                 if isinstance(col, Column) and not isinstance(col, self.ColumnClass):
                     col = self.ColumnClass(col, copy=False)
 
-                newcol = col.insert(index, val, axis=0)
+                newcol = col.insert(index, val)
                 if not isinstance(newcol, BaseColumn):
                     newcol.info.name = name
                     if self.masked:
@@ -2763,19 +2673,19 @@ class QTable(Table):
     masked : bool, optional
         Specify whether the table is masked.
     names : list, optional
-        Specify column names.
+        Specify column names
     dtype : list, optional
-        Specify column data types.
+        Specify column data types
     meta : dict, optional
         Metadata associated with the table.
     copy : bool, optional
-        Copy the input data. Default is True.
+        Copy the input data (default=True).
     rows : numpy ndarray, list of lists, optional
-        Row-oriented data for table instead of ``data`` argument.
+        Row-oriented data for table instead of ``data`` argument
     copy_indices : bool, optional
-        Copy any indices in the input data. Default is True.
+        Copy any indices in the input data (default=True)
     **kwargs : dict, optional
-        Additional keyword args when converting table-like object.
+        Additional keyword args when converting table-like object
 
     """
     def _add_as_mixin_column(self, col):

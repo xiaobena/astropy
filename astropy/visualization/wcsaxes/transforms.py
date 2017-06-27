@@ -244,11 +244,7 @@ class CoordinateTransform(CurvedTransform):
         c_in = SkyCoord(x_in, y_in, unit=(u.deg, u.deg),
                         frame=self.input_system)
 
-        # We often need to transform arrays that contain NaN values, and filtering
-        # out the NaN values would have a performance hit, so instead we just pass
-        # on all values and just ignore Numpy warnings
-        with np.errstate(all='ignore'):
-            c_out = c_in.transform_to(self.output_system)
+        c_out = c_in.transform_to(self.output_system)
 
         if issubclass(c_out.representation, (SphericalRepresentation, UnitSphericalRepresentation)):
             lon = c_out.data.lon.deg

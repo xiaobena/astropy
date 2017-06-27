@@ -153,11 +153,11 @@ class TimeFormat(object):
                             .format(self.name))
 
         if getattr(val1, 'unit', None) is not None:
-            # Possibly scaled unit any quantity-likes should be converted to
+            # set possibly scaled unit any quantities should be converted to
             _unit = u.CompositeUnit(getattr(self, 'unit', 1.), [u.day], [1])
-            val1 = u.Quantity(val1, copy=False).to_value(_unit)
+            val1 = val1.to(_unit).value
             if val2 is not None:
-                val2 = u.Quantity(val2, copy=False).to_value(_unit)
+                val2 = val2.to(_unit).value
         elif getattr(val2, 'unit', None) is not None:
             raise TypeError('Cannot mix float and Quantity inputs')
 
@@ -603,10 +603,6 @@ class TimeDatetime(TimeUnique):
                              op_dtypes=7*[iys.dtype] + [np.object])
 
         for iy, im, id, ihr, imin, isec, ifracsec, out in iterator:
-            if isec >= 60:
-                raise ValueError('Time {} is within a leap second but datetime '
-                                 'does not support leap seconds'
-                                 .format((iy, im, id, ihr, imin, isec, ifracsec)))
             if timezone is not None:
                 out[...] = datetime.datetime(iy, im, id, ihr, imin, isec, ifracsec,
                                              tzinfo=TimezoneInfo()).astimezone(timezone)
@@ -653,9 +649,9 @@ class TimezoneInfo(datetime.tzinfo):
         """
         if utc_offset == 0 and dst == 0 and tzname is None:
             tzname = 'UTC'
-        self._utcoffset = datetime.timedelta(utc_offset.to_value(u.day))
+        self._utcoffset = datetime.timedelta(utc_offset.to(u.day).value)
         self._tzname = tzname
-        self._dst = datetime.timedelta(dst.to_value(u.day))
+        self._dst = datetime.timedelta(dst.to(u.day).value)
 
     def utcoffset(self, dt):
         return self._utcoffset
@@ -958,8 +954,8 @@ class TimeFITS(TimeString):
             fits_scale = tm['scale'].upper()
             scale = FITS_DEPRECATED_SCALES.get(fits_scale, fits_scale.lower())
             if scale not in TIME_SCALES:
-                raise ValueError("Scale {0!r} is not in the allowed scales {1}"
-                                 .format(scale, sorted(TIME_SCALES)))
+                raise ValueError("Scale {0} is not in the allowed scales {1}"
+                                 .format(repr(scale), sorted(TIME_SCALES)))
             # If no scale was given in the initialiser, set the scale to
             # that given in the string.  Also store a possible realization,
             # so we can round-trip (as long as no scale changes are made).

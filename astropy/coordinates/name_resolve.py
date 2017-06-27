@@ -132,7 +132,6 @@ def get_icrs_coordinates(name):
             fmt_url = fmt_url.format(name=urllib.parse.quote(name), db=db)
             urls.append(fmt_url)
 
-    exceptions = []
     for url in urls:
         try:
             # Retrieve ascii name resolve data from CDS
@@ -140,22 +139,27 @@ def get_icrs_coordinates(name):
             resp_data = resp.read()
             break
         except urllib.error.URLError as e:
-            exceptions.append(e)
-            continue
-        except socket.timeout as e:
+            # This catches a timeout error, see:
+            #   http://stackoverflow.com/questions/2712524/handling-urllib2s-timeout-python
+            if isinstance(e.reason, socket.timeout):
+                # If it was a timeout, try with the next URL
+                continue
+            else:
+                raise NameResolveError(
+                    "Unable to retrieve coordinates for name '{0}'; "
+                    "connection timed out".format(name))
+        except socket.timeout:
             # There are some cases where urllib2 does not catch socket.timeout
             # especially while receiving response data on an already previously
             # working request
-            exceptions.append(e)
-            continue
+            raise NameResolveError(
+                "Unable to retrieve coordinates for name '{0}'; connection "
+                "timed out".format(name))
 
-    # All Sesame URL's failed...
+    # All Sesame URL's timed out...
     else:
-        messages = ["{url}: {e.reason}".format(url=url, e=e)
-                    for url,e in zip(urls, exceptions)]
-        raise NameResolveError("All Sesame queries failed. Unable to "
-                               "retrieve coordinates. See errors per URL "
-                               "below: \n {}".format("\n".join(messages)))
+        raise NameResolveError("All Sesame queries timed out. Unable to "
+                               "retrieve coordinates.")
 
     ra, dec = _parse_response(resp_data)
 

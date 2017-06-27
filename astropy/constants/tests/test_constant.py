@@ -8,10 +8,9 @@ from ...extern import six
 
 import copy
 
-import pytest
-
 from .. import Constant
 from ...units import Quantity as Q
+from ...tests.helper import pytest
 
 
 def test_c():

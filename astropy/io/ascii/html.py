@@ -337,7 +337,7 @@ class HTML(core.BaseReader):
         """
 
         self.outputter = HTMLOutputter()
-        return super(HTML, self).read(table)
+        return core.BaseReader.read(self, table)
 
     def write(self, table):
         """
@@ -387,9 +387,8 @@ class HTML(core.BaseReader):
                             w.data('')  # need this instead of pass to get <script></script>
             with w.tag('body'):
                 if 'js' in self.html:
-                    with w.xml_cleaning_method('none'):
-                        with w.tag('script'):
-                            w.data(self.html['js'])
+                    with w.tag('script'):
+                        w.data(self.html['js'])
                 if isinstance(self.html['table_id'], six.string_types):
                     html_table_id = self.html['table_id']
                 else:

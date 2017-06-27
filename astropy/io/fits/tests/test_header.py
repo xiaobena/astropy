@@ -10,7 +10,6 @@ import collections
 
 from io import StringIO, BytesIO
 
-import pytest
 import numpy as np
 
 from ....extern import six
@@ -18,7 +17,7 @@ from ....extern.six import u, iterkeys, itervalues, iteritems
 from ....extern.six.moves import zip, range
 from ....io import fits
 from ....io.fits.verify import VerifyWarning
-from ....tests.helper import catch_warnings, ignore_warnings
+from ....tests.helper import pytest, catch_warnings, ignore_warnings
 
 from . import FitsTestCase
 from ..card import _pad
@@ -1517,7 +1516,7 @@ class TestHeaderFunctions(FitsTestCase):
 
         with ignore_warnings():
             hdu.writeto(self.temp('test.fits'), output_verify='ignore',
-                        overwrite=True)
+                        clobber=True)
         hdul2 = fits.open(self.temp('test.fits'))
         assert len(hdul2) == 2
         assert 'MYKEY' in hdul2[1].header
@@ -1653,34 +1652,6 @@ class TestHeaderFunctions(FitsTestCase):
             assert len(w) == 1
             assert str(w[0].message).startswith(
                 "Missing padding to end of the FITS block")
-
-    @pytest.mark.skipif('six.PY2')
-    def test_invalid_characters(self):
-        """
-        Test header with invalid characters
-        """
-
-        # Generate invalid file with non-ASCII character
-        h = fits.Header()
-        h['FOO'] = 'BAR'
-        h['COMMENT'] = 'hello'
-        hdul = fits.PrimaryHDU(header=h, data=np.arange(5))
-        hdul.writeto(self.temp('test.fits'))
-
-        with open(self.temp('test.fits'), 'rb') as f:
-            out = f.read()
-        out = out.replace(b'hello', u'héllo'.encode('latin1'))
-        out = out.replace(b'BAR', u'BÀR'.encode('latin1'))
-        with open(self.temp('test2.fits'), 'wb') as f2:
-            f2.write(out)
-
-        with catch_warnings() as w:
-            h = fits.getheader(self.temp('test2.fits'))
-            assert h['FOO'] ==  'B?R'
-            assert h['COMMENT'] ==  'h?llo'
-            assert len(w) == 1
-            assert str(w[0].message).startswith(
-                "non-ASCII characters are present in the FITS file")
 
     def test_unnecessary_move(self):
         """

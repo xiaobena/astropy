@@ -52,12 +52,9 @@ class Conf(_config.ConfigNamespace):
 
     dataurl = _config.ConfigItem(
         'http://data.astropy.org/',
-        'Primary URL for astropy remote data site.')
-    dataurl_mirror = _config.ConfigItem(
-        'http://astropy.org/astropy-data/',
-        'Mirror URL for astropy remote data site.')
+        'URL for astropy remote data site.')
     remote_timeout = _config.ConfigItem(
-        10.,
+        3.,
         'Time to wait for remote data queries (in seconds).',
         aliases=['astropy.coordinates.name_resolve.name_resolve_timeout'])
     compute_hash_block_size = _config.ConfigItem(
@@ -487,16 +484,8 @@ def get_pkg_data_fileobj(data_name, package=None, encoding=None, cache=True):
     elif os.path.isfile(datafn):  # local file
         return get_readable_fileobj(datafn, encoding=encoding)
     else:  # remote file
-        all_urls = (conf.dataurl, conf.dataurl_mirror)
-        for url in all_urls:
-            try:
-                return get_readable_fileobj(url + datafn, encoding=encoding,
-                                            cache=cache)
-            except urllib.error.URLError as e:
-                pass
-        urls = '\n'.join('  - {0}'.format(url) for url in all_urls)
-        raise urllib.error.URLError("Failed to download {0} from the following "
-                                    "repositories:\n\n{1}".format(datafn, urls))
+        return get_readable_fileobj(conf.dataurl + datafn, encoding=encoding,
+                                    cache=cache)
 
 
 def get_pkg_data_filename(data_name, package=None, show_progress=True,
@@ -593,20 +582,11 @@ def get_pkg_data_filename(data_name, package=None, show_progress=True,
     if data_name.startswith('hash/'):
         # first try looking for a local version if a hash is specified
         hashfn = _find_hash_fn(data_name[5:])
-
         if hashfn is None:
-            all_urls = (conf.dataurl, conf.dataurl_mirror)
-            for url in all_urls:
-                try:
-                    return download_file(url + data_name, cache=True,
-                                         show_progress=show_progress,
-                                         timeout=remote_timeout)
-                except urllib.error.URLError:
-                    pass
-            urls = '\n'.join('  - {0}'.format(url) for url in all_urls)
-            raise urllib.error.URLError("Failed to download {0} from the following "
-                                        "repositories:\n\n{1}\n\n".format(data_name, urls))
-
+            return download_file(
+                conf.dataurl + data_name, cache=True,
+                show_progress=show_progress,
+                timeout=remote_timeout)
         else:
             return hashfn
     else:
@@ -617,17 +597,10 @@ def get_pkg_data_filename(data_name, package=None, show_progress=True,
         elif os.path.isfile(datafn):  # local file
             return datafn
         else:  # remote file
-            all_urls = (conf.dataurl, conf.dataurl_mirror)
-            for url in all_urls:
-                try:
-                    return download_file(url + data_name, cache=True,
-                                         show_progress=show_progress,
-                                         timeout=remote_timeout)
-                except urllib.error.URLError:
-                    pass
-            urls = '\n'.join('  - {0}'.format(url) for url in all_urls)
-            raise urllib.error.URLError("Failed to download {0} from the following "
-                                        "repositories:\n\n{1}".format(data_name, urls))
+            return download_file(
+                conf.dataurl + data_name, cache=True,
+                show_progress=show_progress,
+                timeout=remote_timeout)
 
 
 def get_pkg_data_contents(data_name, package=None, encoding=None, cache=True):

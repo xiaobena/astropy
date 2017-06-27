@@ -4,13 +4,13 @@
 
 import copy
 import functools
+import sys
 import datetime
 from copy import deepcopy
 
-import pytest
 import numpy as np
 
-from ...tests.helper import catch_warnings
+from ...tests.helper import pytest, catch_warnings
 from ...tests.disable_internet import INTERNET_OFF
 from ...extern import six
 from ...extern.six.moves import zip
@@ -821,7 +821,13 @@ def test_now():
     # times are more like microseconds.  But it seems safer in case some
     # platforms have slow clock calls or something.
 
-    assert dt.total_seconds() < 0.1
+    # py < 2.7 doesn't have `total_seconds`
+    if sys.version_info[:2] < (2, 7):
+        total_secs = lambda td: (td.microseconds + (
+            td.seconds + td.days * 24 * 3600) * 10 ** 6) / 10 ** 6.
+    else:
+        total_secs = lambda td: td.total_seconds()
+    assert total_secs(dt) < 0.1
 
 
 def test_decimalyear():
@@ -1049,10 +1055,6 @@ def test_to_datetime():
     for dt, tz_dt in zip(time.datetime, tz_aware_datetime):
         assert tz.tzname(dt) == tz_dt.tzname()
     assert np.all(time == forced_to_astropy_time)
-
-    with pytest.raises(ValueError) as e:
-        Time('2015-06-30 23:59:60.000').to_datetime()
-        assert 'does not support leap seconds' in str(e.message)
 
 @pytest.mark.skipif('not HAS_PYTZ')
 def test_to_datetime_pytz():

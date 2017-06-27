@@ -629,8 +629,7 @@ void configure_compression(fitsfile* fileptr, PyObject* header) {
                 get_header_float(header, keyword, &(Fptr->hcomp_scale),
                                  DEFAULT_HCOMP_SCALE);
             }
-        }
-        if (Fptr->zbitpix < 0 && 0 == strcmp(zname, "NOISEBIT")) {
+        } else if (Fptr->zbitpix < 0 && 0 == strcmp(zname, "NOISEBIT")) {
              get_header_float(header, keyword, &(Fptr->quantize_level),
                               DEFAULT_QUANTIZE_LEVEL);
              if (Fptr->quantize_level == 0.0) {
@@ -726,8 +725,6 @@ void init_output_buffer(PyObject* hdu, void** buf, size_t* bufsize) {
     }
 
     if (0 != get_header_int(header, "ZNAXIS", &znaxis, 0)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "ZNAXIS keyword not present in header.");
         goto fail;
     }
 
@@ -748,8 +745,6 @@ void init_output_buffer(PyObject* hdu, void** buf, size_t* bufsize) {
 
     // Get the ZBITPIX header value; if this is missing we're in trouble
     if (0 != get_header_int(header, "ZBITPIX", &zbitpix, 0)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "ZBITPIX keyword not present in header.");
         goto fail;
     }
 
@@ -769,13 +764,6 @@ void init_output_buffer(PyObject* hdu, void** buf, size_t* bufsize) {
     }
 
     *buf = calloc(*bufsize, sizeof(char));
-    if (*buf == NULL) {
-        // Checking if calloc failed.
-        PyErr_SetString(PyExc_MemoryError,
-                        "Failed to allocate memory for output data buffer.");
-        goto fail;
-    }
-
 fail:
     Py_XDECREF(header);
     return;
@@ -900,7 +888,7 @@ PyObject* compression_compress_hdu(PyObject* self, PyObject* args)
     PyObject* retval = NULL;
     tcolumn* columns = NULL;
 
-    void* outbuf = NULL;
+    void* outbuf;
     size_t outbufsize;
 
     PyArrayObject* indata = NULL;

@@ -6,10 +6,8 @@ from __future__ import (absolute_import, division, print_function,
 # STDLIB
 import os
 import time
-import warnings
 
 # THIRD-PARTY
-import pytest
 import numpy as np
 
 # LOCAL
@@ -18,9 +16,8 @@ from ..exceptions import VOSError, ConeSearchError
 from ... import conf
 from .... import units as u
 from ....coordinates import ICRS, SkyCoord
-from ....tests.helper import remote_data
+from ....tests.helper import pytest, remote_data
 from ....utils.data import get_pkg_data_filename
-from ....utils.exceptions import AstropyDeprecationWarning
 from ....utils import data
 
 
@@ -33,15 +30,6 @@ SCS_DEC = 0
 SCS_SR = 0.1
 SCS_CENTER = ICRS(SCS_RA * u.degree, SCS_DEC * u.degree)
 SCS_RADIUS = SCS_SR * u.degree
-
-
-def setup_module():
-    """Ignore all deprecation warnings here."""
-    warnings.simplefilter('ignore', AstropyDeprecationWarning)
-
-
-def teardown_module():
-    warnings.resetwarnings()
 
 
 @remote_data

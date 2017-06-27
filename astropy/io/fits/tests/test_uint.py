@@ -2,12 +2,11 @@
 
 import platform
 
-import pytest
 import numpy as np
 
 from ....io import fits
 from . import FitsTestCase
-from ....tests.helper import ignore_warnings
+from ....tests.helper import pytest, ignore_warnings
 
 
 class TestUintFunctions(FitsTestCase):

@@ -141,8 +141,6 @@ class SLSQP(Optimization):
             kwargs['epsilon'] = self._eps
         if 'acc' not in kwargs:
             kwargs['acc'] = self._acc
-        # Get the verbosity level
-        disp = kwargs.pop('verblevel', None)
 
         # set the values of constraints to match the requirements of fmin_slsqp
         model = fargs[0]
@@ -159,7 +157,7 @@ class SLSQP(Optimization):
         eqcons = np.array(model.eqcons)
         ineqcons = np.array(model.ineqcons)
         fitparams, final_func_val, numiter, exit_mode, mess = self.opt_method(
-            objfunc, initval, args=fargs, full_output=True, disp=disp,
+            objfunc, initval, args=fargs, full_output=True,
             bounds=bounds, eqcons=eqcons, ieqcons=ineqcons,
             **kwargs)
 
@@ -223,11 +221,9 @@ class Simplex(Optimization):
         if 'xtol' in kwargs:
             self._acc = kwargs['xtol']
             kwargs.pop('xtol')
-        # Get the verbosity level
-        disp = kwargs.pop('verblevel', None)
 
         fitparams, final_func_val, numiter, funcalls, exit_mode = self.opt_method(
-            objfunc, initval, args=fargs, xtol=self._acc, disp=disp,
+            objfunc, initval, args=fargs, xtol=self._acc,
             full_output=True, **kwargs)
         self.fit_info['final_func_val'] = final_func_val
         self.fit_info['numiter'] = numiter

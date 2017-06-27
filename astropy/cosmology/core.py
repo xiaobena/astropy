@@ -15,7 +15,7 @@ from . import scalar_inv_efuncs
 
 from .. import constants as const
 from .. import units as u
-from ..utils import isiterable
+from ..utils import isiterable, deprecated
 from ..utils.compat.funcsigs import signature
 from ..utils.state import ScienceState
 
@@ -118,7 +118,7 @@ class FLRW(Cosmology):
 
     Tcmb0 : float or scalar `~astropy.units.Quantity`, optional
         Temperature of the CMB z=0. If a float, must be in [K].
-        Default: 0 [K]. Setting this to zero will turn off both photons
+        Default: 2.725 [K]. Setting this to zero will turn off both photons
         and neutrinos (even massive ones).
 
     Neff : float, optional
@@ -146,7 +146,7 @@ class FLRW(Cosmology):
     of the parameters.  That is, all of the attributes above are
     read only.
     """
-    def __init__(self, H0, Om0, Ode0, Tcmb0=0, Neff=3.04,
+    def __init__(self, H0, Om0, Ode0, Tcmb0=2.725, Neff=3.04,
                  m_nu=u.Quantity(0.0, u.eV), Ob0=None, name=None):
 
         # all densities are in units of the critical density
@@ -932,6 +932,32 @@ class FLRW(Cosmology):
         args = self._inv_efunc_scalar_args
         return self._inv_efunc_scalar(z, *args) / (1.0 + z)
 
+    @deprecated(since=1.1, alternative='lookback_time_integrand')
+    def _tfunc(self, z):
+        """ Integrand of the lookback time.
+
+        Parameters
+        ----------
+        z : float or array-like
+          Input redshift.
+
+        Returns
+        -------
+        I : float or array
+          The integrand for the lookback time
+
+        References
+        ----------
+        Eqn 30 from Hogg 1999.
+        """
+
+        if isiterable(z):
+            zp1 = 1.0 + np.asarray(z)
+        else:
+            zp1 = 1. + z
+
+        return self.inv_efunc(z) / zp1
+
     def lookback_time_integrand(self, z):
         """ Integrand of the lookback time.
 
@@ -977,6 +1003,31 @@ class FLRW(Cosmology):
 
         args = self._inv_efunc_scalar_args
         return (1.0 + z) ** 2 * self._inv_efunc_scalar(z, *args)
+
+    @deprecated(since=1.1, alternative='abs_distance_integrand')
+    def _xfunc(self, z):
+        """ Integrand of the absorption distance.
+
+        Parameters
+        ----------
+        z : float or array
+          Input redshift.
+
+        Returns
+        -------
+        X : float or array
+          The integrand for the absorption distance
+
+        References
+        ----------
+        See Hogg 1999 section 11.
+        """
+
+        if isiterable(z):
+            zp1 = 1.0 + np.asarray(z)
+        else:
+            zp1 = 1. + z
+        return zp1 ** 2 * self.inv_efunc(z)
 
     def abs_distance_integrand(self, z):
         """ Integrand of the absorption distance.
@@ -1517,7 +1568,7 @@ class LambdaCDM(FLRW):
 
     Tcmb0 : float or scalar `~astropy.units.Quantity`, optional
         Temperature of the CMB z=0. If a float, must be in [K].
-        Default: 0 [K]. Setting this to zero will turn off both photons
+        Default: 2.725 [K]. Setting this to zero will turn off both photons
         and neutrinos (even massive ones).
 
     Neff : float, optional
@@ -1550,7 +1601,7 @@ class LambdaCDM(FLRW):
     >>> dc = cosmo.comoving_distance(z)
     """
 
-    def __init__(self, H0, Om0, Ode0, Tcmb0=0, Neff=3.04,
+    def __init__(self, H0, Om0, Ode0, Tcmb0=2.725, Neff=3.04,
                  m_nu=u.Quantity(0.0, u.eV), Ob0=None, name=None):
 
         FLRW.__init__(self, H0, Om0, Ode0, Tcmb0, Neff, m_nu, name=name,
@@ -1702,7 +1753,7 @@ class FlatLambdaCDM(LambdaCDM):
 
     Tcmb0 : float or scalar `~astropy.units.Quantity`, optional
         Temperature of the CMB z=0. If a float, must be in [K].
-        Default: 0 [K]. Setting this to zero will turn off both photons
+        Default: 2.725 [K]. Setting this to zero will turn off both photons
         and neutrinos (even massive ones).
 
     Neff : float, optional
@@ -1735,7 +1786,7 @@ class FlatLambdaCDM(LambdaCDM):
     >>> dc = cosmo.comoving_distance(z)
     """
 
-    def __init__(self, H0, Om0, Tcmb0=0, Neff=3.04,
+    def __init__(self, H0, Om0, Tcmb0=2.725, Neff=3.04,
                  m_nu=u.Quantity(0.0, u.eV), Ob0=None, name=None):
 
         LambdaCDM.__init__(self, H0, Om0, 0.0, Tcmb0, Neff, m_nu, name=name,
@@ -1855,7 +1906,7 @@ class wCDM(FLRW):
 
     Tcmb0 : float or scalar `~astropy.units.Quantity`, optional
         Temperature of the CMB z=0. If a float, must be in [K].
-        Default: 0 [K]. Setting this to zero will turn off both photons
+        Default: 2.725 [K]. Setting this to zero will turn off both photons
         and neutrinos (even massive ones).
 
     Neff : float, optional
@@ -1888,7 +1939,7 @@ class wCDM(FLRW):
     >>> dc = cosmo.comoving_distance(z)
     """
 
-    def __init__(self, H0, Om0, Ode0, w0=-1., Tcmb0=0,
+    def __init__(self, H0, Om0, Ode0, w0=-1., Tcmb0=2.725,
                  Neff=3.04, m_nu=u.Quantity(0.0, u.eV), Ob0=None, name=None):
 
         FLRW.__init__(self, H0, Om0, Ode0, Tcmb0, Neff, m_nu, name=name,
@@ -2060,7 +2111,7 @@ class FlatwCDM(wCDM):
 
     Tcmb0 : float or scalar `~astropy.units.Quantity`, optional
         Temperature of the CMB z=0. If a float, must be in [K].
-        Default: 0 [K]. Setting this to zero will turn off both photons
+        Default: 2.725 [K]. Setting this to zero will turn off both photons
         and neutrinos (even massive ones).
 
     Neff : float, optional
@@ -2093,7 +2144,7 @@ class FlatwCDM(wCDM):
     >>> dc = cosmo.comoving_distance(z)
     """
 
-    def __init__(self, H0, Om0, w0=-1., Tcmb0=0,
+    def __init__(self, H0, Om0, w0=-1., Tcmb0=2.725,
                  Neff=3.04, m_nu=u.Quantity(0.0, u.eV), Ob0=None, name=None):
 
         wCDM.__init__(self, H0, Om0, 0.0, w0, Tcmb0, Neff, m_nu,
@@ -2218,7 +2269,7 @@ class w0waCDM(FLRW):
 
     Tcmb0 : float or scalar `~astropy.units.Quantity`, optional
         Temperature of the CMB z=0. If a float, must be in [K].
-        Default: 0 [K]. Setting this to zero will turn off both photons
+        Default: 2.725 [K]. Setting this to zero will turn off both photons
         and neutrinos (even massive ones).
 
     Neff : float, optional
@@ -2251,7 +2302,7 @@ class w0waCDM(FLRW):
     >>> dc = cosmo.comoving_distance(z)
     """
 
-    def __init__(self, H0, Om0, Ode0, w0=-1., wa=0., Tcmb0=0,
+    def __init__(self, H0, Om0, Ode0, w0=-1., wa=0., Tcmb0=2.725,
                  Neff=3.04, m_nu=u.Quantity(0.0, u.eV), Ob0=None, name=None):
 
         FLRW.__init__(self, H0, Om0, Ode0, Tcmb0, Neff, m_nu, name=name,
@@ -2384,7 +2435,7 @@ class Flatw0waCDM(w0waCDM):
 
     Tcmb0 : float or scalar `~astropy.units.Quantity`, optional
         Temperature of the CMB z=0. If a float, must be in [K].
-        Default: 0 [K]. Setting this to zero will turn off both photons
+        Default: 2.725 [K]. Setting this to zero will turn off both photons
         and neutrinos (even massive ones).
 
     Neff : float, optional
@@ -2417,7 +2468,7 @@ class Flatw0waCDM(w0waCDM):
     >>> dc = cosmo.comoving_distance(z)
     """
 
-    def __init__(self, H0, Om0, w0=-1., wa=0., Tcmb0=0,
+    def __init__(self, H0, Om0, w0=-1., wa=0., Tcmb0=2.725,
                  Neff=3.04, m_nu=u.Quantity(0.0, u.eV), Ob0=None, name=None):
 
         w0waCDM.__init__(self, H0, Om0, 0.0, w0=w0, wa=wa, Tcmb0=Tcmb0,
@@ -2492,7 +2543,7 @@ class wpwaCDM(FLRW):
 
     Tcmb0 : float or scalar `~astropy.units.Quantity`, optional
         Temperature of the CMB z=0. If a float, must be in [K].
-        Default: 0 [K]. Setting this to zero will turn off both photons
+        Default: 2.725 [K]. Setting this to zero will turn off both photons
         and neutrinos (even massive ones).
 
     Neff : float, optional
@@ -2526,7 +2577,7 @@ class wpwaCDM(FLRW):
     """
 
     def __init__(self, H0, Om0, Ode0, wp=-1., wa=0., zp=0,
-                 Tcmb0=0, Neff=3.04, m_nu=u.Quantity(0.0, u.eV),
+                 Tcmb0=2.725, Neff=3.04, m_nu=u.Quantity(0.0, u.eV),
                  Ob0=None, name=None):
 
         FLRW.__init__(self, H0, Om0, Ode0, Tcmb0, Neff, m_nu, name=name,
@@ -2675,7 +2726,7 @@ class w0wzCDM(FLRW):
 
     Tcmb0 : float or scalar `~astropy.units.Quantity`, optional
         Temperature of the CMB z=0. If a float, must be in [K].
-        Default: 0 [K]. Setting this to zero will turn off both photons
+        Default: 2.725 [K]. Setting this to zero will turn off both photons
         and neutrinos (even massive ones).
 
     Neff : float, optional
@@ -2708,7 +2759,7 @@ class w0wzCDM(FLRW):
     >>> dc = cosmo.comoving_distance(z)
     """
 
-    def __init__(self, H0, Om0, Ode0, w0=-1., wz=0., Tcmb0=0,
+    def __init__(self, H0, Om0, Ode0, w0=-1., wz=0., Tcmb0=2.725,
                  Neff=3.04, m_nu=u.Quantity(0.0, u.eV), Ob0=None,
                  name=None):
 

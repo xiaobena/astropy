@@ -19,7 +19,6 @@ from ...coordinates import (ICRS, BaseCoordinateFrame, Longitude, Latitude,
 from ...units import Quantity
 from ...utils.timer import timefunc, RunTimePredictor
 from ...utils.exceptions import AstropyUserWarning
-from ...utils.decorators import deprecated
 from ...utils import data
 
 __all__ = ['AsyncConeSearch', 'conesearch', 'AsyncSearchAll', 'search_all',
@@ -31,8 +30,6 @@ __all__ = ['AsyncConeSearch', 'conesearch', 'AsyncSearchAll', 'search_all',
 __doctest_skip__ = ['AsyncConeSearch', 'AsyncSearchAll']
 
 
-@deprecated(
-    '2.0', alternative='astroquery.vo_conesearch.conesearch.AsyncConeSearch')
 class AsyncConeSearch(AsyncBase):
     """Perform a Cone Search asynchronously and returns the result of the
     first successful query.
@@ -79,8 +76,6 @@ class AsyncConeSearch(AsyncBase):
         super(AsyncConeSearch, self).__init__(conesearch, *args, **kwargs)
 
 
-@deprecated(
-    '2.0', alternative='astroquery.vo_conesearch.conesearch.conesearch')
 def conesearch(center, radius, verb=1, **kwargs):
     """Perform Cone Search and returns the result of the
     first successful query.
@@ -193,8 +188,6 @@ def conesearch(center, radius, verb=1, **kwargs):
                                        kwargs=args, **kwargs)
 
 
-@deprecated(
-    '2.0', alternative='astroquery.vo_conesearch.conesearch.AsyncSearchAll')
 class AsyncSearchAll(AsyncBase):
     """Perform a Cone Search asynchronously, storing all results
     instead of just the result from first successful query.
@@ -240,8 +233,6 @@ class AsyncSearchAll(AsyncBase):
         AsyncBase.__init__(self, search_all, *args, **kwargs)
 
 
-@deprecated(
-    '2.0', alternative='astroquery.vo_conesearch.conesearch.search_all')
 def search_all(*args, **kwargs):
     """Perform Cone Search and returns the results of
     all successful queries.
@@ -294,8 +285,6 @@ def search_all(*args, **kwargs):
     return all_results
 
 
-@deprecated(
-    '2.0', alternative='astroquery.vo_conesearch.conesearch.list_catalogs')
 def list_catalogs(**kwargs):
     """Return the available Cone Search catalogs as a list of strings.
     These can be used for the ``catalog_db`` argument to
@@ -332,8 +321,6 @@ def list_catalogs(**kwargs):
     return vos_catalog.list_catalogs(conf.conesearch_dbname, **kwargs)
 
 
-@deprecated(
-    '2.0', alternative='astroquery.vo_conesearch.conesearch.predict_search')
 def predict_search(url, *args, **kwargs):
     """Predict the run time needed and the number of objects
     for a Cone Search for the given access URL, position, and
@@ -467,8 +454,6 @@ def predict_search(url, *args, **kwargs):
     return t_est, n_est
 
 
-@deprecated(
-    '2.0', alternative='astroquery.vo_conesearch.conesearch.conesearch_timer')
 @timefunc(1)
 def conesearch_timer(*args, **kwargs):
     """Time a single Cone Search using `astropy.utils.timer.timefunc`

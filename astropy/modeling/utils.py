@@ -12,12 +12,11 @@ from collections import deque, MutableMapping
 import numpy as np
 
 from ..extern import six
-from ..extern.six.moves import range, zip
+from ..extern.six.moves import range, zip_longest, zip
 
 from ..utils import isiterable, check_broadcast
 from ..utils.compat.funcsigs import signature
 
-from .. import units as u
 
 __all__ = ['ExpressionTree', 'AliasDict', 'check_broadcast',
            'poly_map_domain', 'comb', 'ellipse_extent']
@@ -409,7 +408,7 @@ class _BoundingBox(tuple):
             if len(bounding_box) == 1:
                 return cls((tuple(bounding_box[0]),))
             else:
-                return cls(tuple(bounding_box))
+                return cls((tuple(bounding_box),))
         else:
             msg = ("Bounding box for {0} model must be a sequence of length "
                    "{1} (the number of model inputs) consisting of pairs of "
@@ -521,13 +520,12 @@ def ellipse_extent(a, b, theta):
 
     Parameters
     ----------
-    a : float or `~astropy.units.Quantity`
+    a : float
         Major axis.
-    b : float or `~astropy.units.Quantity`
+    b : float
         Minor axis.
-    theta : float or `~astropy.units.Quantity`
-        Rotation angle. If given as a floating-point value, it is assumed to be
-        in radians.
+    theta : float
+        Rotation angle in radians.
 
     Returns
     -------
@@ -573,10 +571,7 @@ def ellipse_extent(a, b, theta):
     t = np.arctan2(b, a * np.tan(theta))
     dy = b * np.sin(t) * np.cos(theta) + a * np.cos(t) * np.sin(theta)
 
-    if isinstance(dx, u.Quantity) or isinstance(dy, u.Quantity):
-        return np.abs(u.Quantity([dx, dy]))
-    else:
-        return np.abs([dx, dy])
+    return np.abs([dx, dy])
 
 
 def get_inputs_and_params(func):
@@ -606,31 +601,3 @@ def get_inputs_and_params(func):
             params.append(param)
 
     return inputs, params
-
-
-def _parameter_with_unit(parameter, unit):
-    if parameter.unit is None:
-        return parameter.value * unit
-    else:
-        return parameter.quantity.to(unit)
-
-
-def _parameter_without_unit(value, old_unit, new_unit):
-    if old_unit is None:
-        return value
-    else:
-        return value * old_unit.to(new_unit)
-
-
-def _combine_equivalency_dict(keys, eq1=None, eq2=None):
-    # Given two dictionaries that give equivalencies for a set of keys, for
-    # example input value names, return a dictionary that includes all the
-    # equivalencies
-    eq = {}
-    for key in keys:
-        eq[key] = []
-        if eq1 is not None and key in eq1:
-            eq[key].extend(eq1[key])
-        if eq2 is not None and key in eq2:
-            eq[key].extend(eq2[key])
-    return eq

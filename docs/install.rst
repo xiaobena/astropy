@@ -7,15 +7,13 @@ Requirements
 
 Astropy has the following strict requirements:
 
-- `Python <http://www.python.org/>`_ 2.7, 3.3, 3.4, 3.5 or 3.6
+- `Python <http://www.python.org/>`_ 2.7, 3.3, 3.4 or 3.5
 
   - Prior to Astropy v1.0, Python 3.1 and 3.2 were also supported
 
   - Prior to Astropy v1.2, Python 2.6 was supported
 
 - `Numpy`_ |minimum_numpy_version| or later
-
-- `pytest`_ 2.8 or later
 
 Astropy also depends on other packages for optional features:
 
@@ -122,7 +120,7 @@ run::
 Binary installers
 -----------------
 
-Binary installers are available on Windows for Python 2.7, and >= 3.3
+Binary installers are available on Windows for Python 2.6, 2.7, and >= 3.3
 at `PyPI <https://pypi.python.org/pypi/astropy>`_.
 
 .. _testing_installed_astropy:
@@ -351,7 +349,7 @@ system package in an inconsistent state.
 
 As the best course of action at this point depends largely on the individual
 system and how it is configured, if you are not sure yourself what do please
-ask on the `Astropy mailing list`_.
+ask on the Astropy mailing list.
 
 
 The Windows installer can't find Python in the registry
@@ -495,7 +493,6 @@ installing astropy) is to run this from the root of the source tree::
 
     python setup.py test
 
-There are also alternative methods of :ref:`running-tests`. Note that you will
-need `pytest <http://pytest.org>`_ to be installed for this to work.
+There are also alternative methods of :ref:`running-tests`.
 
 .. include:: development/workflow/known_projects.inc

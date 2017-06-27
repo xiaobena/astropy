@@ -138,7 +138,7 @@ def test_trailing_spaces_in_row_definition():
     3    3.4  foo
     1    4.5  bar
    ==== ==== ====  
-"""  # noqa
+"""  # nopep8
     reader = ascii.get_reader(Reader=ascii.RST)
     dat = reader.read(table)
     assert_equal(dat.colnames, ["Col1", "Col2", "Col3"])

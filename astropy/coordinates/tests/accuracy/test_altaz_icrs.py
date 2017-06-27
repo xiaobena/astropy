@@ -10,9 +10,7 @@ higher-precision checks on 64-bit machines.
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
-
-import pytest
-
+from ....tests.helper import pytest, catch_warnings
 from .... import units as u
 from ....time import Time
 from ...builtin_frames import AltAz

@@ -7,9 +7,7 @@ import imp
 import sys
 import warnings
 
-import pytest
-
-from .helper import catch_warnings
+from .helper import pytest, catch_warnings
 from .. import log
 from ..logger import LoggingError, conf
 from ..utils.exceptions import AstropyWarning, AstropyUserWarning

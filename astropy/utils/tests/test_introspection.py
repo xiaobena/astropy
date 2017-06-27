@@ -5,12 +5,11 @@ from __future__ import (absolute_import, division, print_function,
 #namedtuple is needed for find_mod_objs so it can have a non-local module
 from collections import namedtuple
 
-import pytest
-
 from ...extern import six
+from ...tests.helper import pytest
 from .. import introspection
 from ..introspection import (find_current_module, find_mod_objs,
-                             isinstancemethod, minversion)
+                             isinstancemethod)
 
 
 def test_pkg_finder():
@@ -93,26 +92,3 @@ def test_isinstancemethod():
     assert not isinstancemethod(MyClass, MyClass.another_classmethod)
     assert not isinstancemethod(MyClass, MyClass.a_staticmethod)
     assert isinstancemethod(MyClass, MyClass.an_instancemethod)
-
-
-def _minversion_test():
-    from types import ModuleType
-    test_module = ModuleType(str("test_module"))
-    test_module.__version__ = '0.12.2'
-    good_versions = ['0.12', '0.12.1', '0.12.0.dev']
-    bad_versions = ['1', '1.2rc1']
-    for version in good_versions:
-        assert minversion(test_module, version)
-    for version in bad_versions:
-        assert not minversion(test_module, version)
-
-
-def test_minversion():
-    import sys
-    if 'pkg_resources' in sys.modules:
-        pkg_resources_saved = sys.modules['pkg_resources']
-        # Force ImportError for pkg_resources in minversion()
-        sys.modules['pkg_resource'] = None
-        _minversion_test()
-        sys.modules['pkg_resource'] = pkg_resources_saved
-    _minversion_test()

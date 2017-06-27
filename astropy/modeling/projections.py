@@ -23,7 +23,7 @@ import numpy as np
 from .core import Model
 from .parameters import Parameter, InputParameterError
 
-from .. import units as u
+from ..utils import deprecated
 
 from . import _projections
 
@@ -119,34 +119,12 @@ class Pix2SkyProjection(Projection):
     inputs = ('x', 'y')
     outputs = ('phi', 'theta')
 
-    input_units_strict = True
-    input_units_allow_dimensionless = True
-
-    @property
-    def input_units(self):
-        return {'x': u.pixel, 'y': u.pixel}
-
-    @property
-    def return_units(self):
-        return {'phi': u.deg, 'theta': u.deg}
-
 
 class Sky2PixProjection(Projection):
     """Base class for all Sky2Pix projections."""
 
     inputs = ('phi', 'theta')
     outputs = ('x', 'y')
-
-    input_units_strict = True
-    input_units_allow_dimensionless = True
-
-    @property
-    def input_units(self):
-        return {'phi': u.deg, 'theta': u.deg}
-
-    @property
-    def return_units(self):
-        return {'x': u.pixel, 'y': u.pixel}
 
 
 class Zenithal(Projection):
@@ -219,6 +197,14 @@ class Pix2Sky_ZenithalPerspective(Pix2SkyProjection, Zenithal):
     @classmethod
     def evaluate(cls, x, y, mu, gamma):
         return _projections.azpx2s(x, y, mu, np.rad2deg(gamma))
+
+    @deprecated('1.1', message='this method was never intended as part of '
+                               'the public API and will be removed; if you '
+                               'do need its functionality use '
+                               'model.mu.validator(val)')
+    def check_mu(self, value):
+        return self.mu.validator(value)
+
 
 
 Pix2Sky_AZP = Pix2Sky_ZenithalPerspective
@@ -311,6 +297,13 @@ class Pix2Sky_SlantZenithalPerspective(Pix2SkyProjection, Zenithal):
     def evaluate(cls, x, y, mu, phi0, theta0):
         return _projections.szpx2s(
             x, y, mu, np.rad2deg(phi0), np.rad2deg(theta0))
+
+    @deprecated('1.1', message='this method was never intended as part of '
+                               'the public API and will be removed; if you '
+                               'do need its functionality use '
+                               'model.mu.validator(val)')
+    def check_mu(self, value):
+        return self.mu.validator(value)
 
 
 Pix2Sky_SZP = Pix2Sky_SlantZenithalPerspective
@@ -880,8 +873,8 @@ class Pix2Sky_PlateCarree(Pix2SkyProjection, Cylindrical):
     @staticmethod
     def evaluate(x, y):
         # The intermediate variables are only used here for clarity
-        phi = np.array(x, copy=True)
-        theta = np.array(y, copy=True)
+        phi = x.copy()
+        theta = y.copy()
 
         return phi, theta
 
@@ -907,8 +900,8 @@ class Sky2Pix_PlateCarree(Sky2PixProjection, Cylindrical):
     @staticmethod
     def evaluate(phi, theta):
         # The intermediate variables are only used here for clarity
-        x = np.array(phi, copy=True)
-        y = np.array(theta, copy=True)
+        x = phi.copy()
+        y = theta.copy()
 
         return x, y
 

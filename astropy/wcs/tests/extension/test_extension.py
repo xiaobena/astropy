@@ -6,7 +6,8 @@ import os
 import subprocess
 import sys
 
-import pytest
+from ....tests.helper import pytest
+
 
 def test_wcsapi_extension(tmpdir):
     # Test that we can build a simple C extension with the astropy.wcs C API

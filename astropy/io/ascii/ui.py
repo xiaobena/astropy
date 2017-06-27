@@ -115,7 +115,7 @@ def get_reader(Reader=None, Inputter=None, Outputter=None, **kwargs):
     Parameters
     ----------
     Reader : `~astropy.io.ascii.BaseReader`
-        Reader class (DEPRECATED). Default is :class:`Basic`.
+        Reader class (DEPRECATED) (default= :class:`Basic`)
     Inputter : `~astropy.io.ascii.BaseInputter`
         Inputter class
     Outputter : `~astropy.io.ascii.BaseOutputter`
@@ -136,23 +136,23 @@ def get_reader(Reader=None, Inputter=None, Outputter=None, **kwargs):
         Line index for the end of data not counting comment or blank lines.
         This value can be negative to count from the end.
     converters : dict
-        Dictionary of converters.
+        Dictionary of converters
     data_Splitter : `~astropy.io.ascii.BaseSplitter`
-        Splitter class to split data columns.
+        Splitter class to split data columns
     header_Splitter : `~astropy.io.ascii.BaseSplitter`
-        Splitter class to split header columns.
+        Splitter class to split header columns
     names : list
-        List of names corresponding to each data column.
-    include_names : list, optional
-        List of names to include in output.
+        List of names corresponding to each data column
+    include_names : list
+        List of names to include in output (default= ``None`` selects all names)
     exclude_names : list
-        List of names to exclude from output (applied after ``include_names``).
+        List of names to exclude from output (applied after ``include_names``)
     fill_values : dict
-        Specification of fill values for bad or missing table values.
+        specification of fill values for bad or missing table values
     fill_include_names : list
-        List of names to include in fill_values.
+        List of names to include in fill_values (default= ``None`` selects all names)
     fill_exclude_names : list
-        List of names to exclude from fill_values (applied after ``fill_include_names``).
+        List of names to exclude from fill_values (applied after ``fill_include_names``)
 
     Returns
     -------
@@ -192,7 +192,7 @@ def read(table, guess=None, **kwargs):
         Input table as a file name, file-like object, list of strings,
         single newline-separated string or pathlib.Path object .
     guess : bool
-        Try to guess the table format. Defaults to None.
+        Try to guess the table format (default= ``True``)
     format : str, `~astropy.io.ascii.BaseReader`
         Input table format
     Inputter : `~astropy.io.ascii.BaseInputter`
@@ -223,18 +223,18 @@ def read(table, guess=None, **kwargs):
     names : list
         List of names corresponding to each data column
     include_names : list
-        List of names to include in output.
+        List of names to include in output (default= ``None`` selects all names)
     exclude_names : list
         List of names to exclude from output (applied after ``include_names``)
     fill_values : dict
         specification of fill values for bad or missing table values
     fill_include_names : list
-        List of names to include in fill_values.
+        List of names to include in fill_values (default= ``None`` selects all names)
     fill_exclude_names : list
         List of names to exclude from fill_values (applied after ``fill_include_names``)
     fast_reader : bool or dict
-        Whether to use the C engine, can also be a dict with options which
-        defaults to `False`; parameters for options dict:
+        Whether to use the C engine, can also be a dict with options which default to ``False``
+        (default= ``True``); parameters for options dict:
 
         use_fast_converter: bool
             enable faster but slightly imprecise floating point conversion method
@@ -245,9 +245,7 @@ def read(table, guess=None, **kwargs):
             Fortran-style scientific notation like ``'3.14159D+00'`` (``'E'``, ``'D'``, ``'Q'``),
             all case-insensitive; default ``'E'``, all other imply ``use_fast_converter``
     Reader : `~astropy.io.ascii.BaseReader`
-        Reader class (DEPRECATED)
-    encoding: str
-        Allow to specify encoding to read the file (default= ``None``).
+        Reader class (DEPRECATED) (default= :class:`Basic`).
 
     Returns
     -------
@@ -295,9 +293,8 @@ def read(table, guess=None, **kwargs):
         # which case the original `table` as the data filename must be left
         # intact.
         if 'readme' not in new_kwargs:
-            encoding = kwargs.get('encoding')
             try:
-                with get_readable_fileobj(table, encoding=encoding) as fileobj:
+                with get_readable_fileobj(table) as fileobj:
                     table = fileobj.read()
             except ValueError:  # unreadable or invalid binary file
                 raise
@@ -377,7 +374,7 @@ def _guess(table, read_kwargs, format, fast_reader):
     fast_reader : bool
     fast_reader : bool or dict
         Whether to use the C engine, can also be a dict with options which
-        defaults to `False`; parameters for options dict:
+        default to ``False`` (default= ``True``); parameters for options dict:
 
         use_fast_converter: bool
             enable faster but slightly imprecise floating point conversion method
@@ -503,7 +500,7 @@ def _guess(table, read_kwargs, format, fast_reader):
                 reader_repr = repr(kwargs.get('Reader', basic.Basic))
                 keys_vals = ['Reader:' + re.search(r"\.(\w+)'>", reader_repr).group(1)]
                 kwargs_sorted = ((key, kwargs[key]) for key in sorted_keys)
-                keys_vals.extend(['{}: {!r}'.format(key, val) for key, val in kwargs_sorted])
+                keys_vals.extend(['{}: {}'.format(key, repr(val)) for key, val in kwargs_sorted])
                 lines.append(' '.join(keys_vals))
 
             msg = ['',
@@ -605,7 +602,7 @@ def get_writer(Writer=None, fast_writer=True, **kwargs):
     Parameters
     ----------
     Writer : ``Writer``
-        Writer class (DEPRECATED). Defaults to :class:`Basic`.
+        Writer class (DEPRECATED) (default= :class:`Basic`)
     delimiter : str
         Column delimiter string
     comment : str
@@ -615,15 +612,15 @@ def get_writer(Writer=None, fast_writer=True, **kwargs):
     formats : dict
         Dictionary of format specifiers or formatting functions
     strip_whitespace : bool
-        Strip surrounding whitespace from column values.
+        Strip surrounding whitespace from column values (default= ``True``)
     names : list
         List of names corresponding to each data column
     include_names : list
-        List of names to include in output.
+        List of names to include in output (default= ``None`` selects all names)
     exclude_names : list
         List of names to exclude from output (applied after ``include_names``)
     fast_writer : bool
-        Whether to use the fast Cython writer.
+        Whether to use the fast Cython writer (default= ``True``)
 
     Returns
     -------
@@ -661,9 +658,9 @@ def write(table, output=None,  format=None, Writer=None, fast_writer=True, **kwa
         Input table as a Reader object, Numpy struct array, file name,
         file-like object, list of strings, or single newline-separated string.
     output : str, file_like
-        Output [filename, file-like object]. Defaults to``sys.stdout``.
+        Output [filename, file-like object] (default = ``sys.stdout``)
     format : str
-        Output table format. Defaults to 'basic'.
+        Output table format (default= ``basic``)
     delimiter : str
         Column delimiter string
     comment : str
@@ -673,15 +670,15 @@ def write(table, output=None,  format=None, Writer=None, fast_writer=True, **kwa
     formats : dict
         Dictionary of format specifiers or formatting functions
     strip_whitespace : bool
-        Strip surrounding whitespace from column values.
+        Strip surrounding whitespace from column values (default= ``True``)
     names : list
         List of names corresponding to each data column
     include_names : list
-        List of names to include in output.
+        List of names to include in output (default= ``None`` selects all names)
     exclude_names : list
         List of names to exclude from output (applied after ``include_names``)
     fast_writer : bool
-        Whether to use the fast Cython writer.
+        Whether to use the fast Cython writer (default= ``True``)
     overwrite : bool
         If ``overwrite=None`` (default) and the file exists, then a
         warning will be issued. In a future release this will instead
@@ -690,7 +687,7 @@ def write(table, output=None,  format=None, Writer=None, fast_writer=True, **kwa
         This parameter is ignored when the ``output`` arg is not a string
         (e.g., a file object).
     Writer : ``Writer``
-        Writer class (DEPRECATED).
+        Writer class (DEPRECATED) (default= :class:`Basic`)
 
     """
     overwrite = kwargs.pop('overwrite', None)

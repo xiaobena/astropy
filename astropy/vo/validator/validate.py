@@ -21,7 +21,6 @@ from ...io.votable.exceptions import E19
 from ...io.votable.validator import html, result
 from ...logger import log
 from ...utils import data
-from ...utils.decorators import deprecated
 from ...utils.exceptions import AstropyUserWarning
 from ...utils.timer import timefunc
 from ...utils.xml.unescaper import unescape_all
@@ -34,8 +33,6 @@ from .tstquery import parse_cs
 __all__ = ['check_conesearch_sites']
 
 
-@deprecated('2.0', alternative=('astroquery.vo_conesearch.validator.'
-                                'validate.check_conesearch_sites'))
 @timefunc(1)
 def check_conesearch_sites(destdir=os.curdir, verbose=True, parallel=True,
                            url_list='default'):

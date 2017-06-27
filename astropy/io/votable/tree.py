@@ -1115,10 +1115,10 @@ class Values(Element, _IDProperty):
         column.meta['values'] = meta
 
     def from_table_column(self, column):
-        if column.info.meta is None or 'values' not in column.info.meta:
+        if 'values' not in column.meta:
             return
 
-        meta = column.info.meta['values']
+        meta = column.meta['values']
         for key in ['ID', 'null']:
             val = meta.get(key, None)
             if val is not None:
@@ -1547,26 +1547,24 @@ class Field(SimpleElement, _IDProperty, _NameProperty, _XtypeProperty,
         `astropy.table.Column` instance.
         """
         kwargs = {}
-        meta = column.info.meta
-        if meta:
-            for key in ['ucd', 'width', 'precision', 'utype', 'xtype']:
-                val = meta.get(key, None)
-                if val is not None:
-                    kwargs[key] = val
+        for key in ['ucd', 'width', 'precision', 'utype', 'xtype']:
+            val = column.meta.get(key, None)
+            if val is not None:
+                kwargs[key] = val
         # TODO: Use the unit framework when available
-        if column.info.unit is not None:
-            kwargs['unit'] = column.info.unit
-        kwargs['name'] = column.info.name
+        if column.unit is not None:
+            kwargs['unit'] = column.unit
+        kwargs['name'] = column.name
         result = converters.table_column_to_votable_datatype(column)
         kwargs.update(result)
 
         field = cls(votable, **kwargs)
 
-        if column.info.description is not None:
-            field.description = column.info.description
+        if column.description is not None:
+            field.description = column.description
         field.values.from_table_column(column)
-        if meta and 'links' in meta:
-            for link in meta['links']:
+        if 'links' in column.meta:
+            for link in column.meta['links']:
                 field.links.append(Link.from_table_column(link))
 
         # TODO: Parse format into precision and width
@@ -3403,8 +3401,10 @@ class VOTableFile(Element, _IDProperty, _DescriptionProperty):
 
         return self
 
-    def to_xml(self, fd, compressed=False, tabledata_format=None,
-               _debug_python_based_parser=False, _astropy_version=None):
+    def to_xml(self, fd, write_null_values=False,
+               compressed=False, tabledata_format=None,
+               _debug_python_based_parser=False,
+               _astropy_version=None):
         """
         Write to an XML file.
 
@@ -3412,6 +3412,12 @@ class VOTableFile(Element, _IDProperty, _DescriptionProperty):
         ----------
         fd : str path or writable file-like object
             Where to write the file.
+
+        write_null_values : bool, optional
+            Deprecated and retained for backward compatibility.  When
+            ``write_null_values`` was `False`, invalid VOTable files
+            could be generated, so the option has just been removed
+            entirely.
 
         compressed : bool, optional
             When `True`, write to a gzip-compressed file.  (Default:
@@ -3424,6 +3430,11 @@ class VOTableFile(Element, _IDProperty, _DescriptionProperty):
             in each `Table` object as it was created or read in.  See
             :ref:`votable-serialization`.
         """
+        if write_null_values:
+            warnings.warn(
+                "write_null_values has been deprecated and has no effect",
+                AstropyDeprecationWarning)
+
         if tabledata_format is not None:
             if tabledata_format.lower() not in (
                     'tabledata', 'binary', 'binary2'):

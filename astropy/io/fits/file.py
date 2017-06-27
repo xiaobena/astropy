@@ -79,7 +79,7 @@ class _File(object):
     Represents a FITS file on disk (or in some other file-like object).
     """
 
-    @deprecated_renamed_argument('clobber', 'overwrite', '2.0')
+    @deprecated_renamed_argument('clobber', 'overwrite', '1.3')
     def __init__(self, fileobj=None, mode=None, memmap=None, overwrite=False,
                  cache=True):
         self.strict_memmap = bool(memmap)

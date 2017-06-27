@@ -6,11 +6,10 @@ import time
 
 from threading import Thread
 
-import pytest
-
+from ..helper import pytest
 from ..disable_internet import no_internet
-from ...extern.six.moves import BaseHTTPServer, SimpleHTTPServer
-from ...extern.six.moves.urllib.request import urlopen
+from astropy.extern.six.moves import BaseHTTPServer, SimpleHTTPServer
+from astropy.extern.six.moves.urllib.request import urlopen
 
 
 def test_outgoing_fails():

@@ -6,14 +6,12 @@ import functools
 import inspect
 import pickle
 
-import pytest
-
 from ..decorators import (deprecated_attribute, deprecated, wraps,
                           sharedmethod, classproperty,
                           format_doc, deprecated_renamed_argument)
 from ..exceptions import AstropyDeprecationWarning, AstropyUserWarning
 from ...extern import six
-from ...tests.helper import catch_warnings
+from ...tests.helper import pytest, catch_warnings
 
 
 def test_wraps():
@@ -354,35 +352,6 @@ def test_deprecated_argument_relaxed():
     with catch_warnings(AstropyUserWarning) as w:
         assert test(1, clobber=2) == 1
         assert len(w) == 1
-
-
-def test_deprecated_argument_pending():
-    # Relax turns the TypeError if both old and new keyword are used into
-    # a warning.
-    @deprecated_renamed_argument('clobber', 'overwrite', '1.3', pending=True)
-    def test(overwrite):
-        return overwrite
-
-    # As positional argument only
-    assert test(1) == 1
-
-    # As new keyword argument
-    assert test(overwrite=1) == 1
-
-    # Using the deprecated name
-    with catch_warnings(AstropyUserWarning, AstropyDeprecationWarning) as w:
-        assert test(clobber=1) == 1
-        assert len(w) == 0
-
-    # Using both. Both keyword
-    with catch_warnings(AstropyUserWarning, AstropyDeprecationWarning) as w:
-        assert test(clobber=2, overwrite=1) == 1
-        assert len(w) == 0
-
-    # One positional, one keyword
-    with catch_warnings(AstropyUserWarning, AstropyDeprecationWarning) as w:
-        assert test(1, clobber=2) == 1
-        assert len(w) == 0
 
 
 def test_deprecated_argument_multi_deprecation():

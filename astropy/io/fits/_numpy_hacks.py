@@ -43,8 +43,8 @@ def realign_dtype(dtype, offsets):
     names, fields = state[3:5]
     fields = fields.copy()
 
-    itemsize = 0  # We will re-determine the itemsize based on the type
-                  # of the field with the largest (offset + itemsize)
+    max_offset = 0
+    itemsize = state[5]  # Default to the original itemsize
 
     if fields is None or len(offsets) != len(names):
         raise ValueError(
@@ -53,10 +53,14 @@ def realign_dtype(dtype, offsets):
 
     for name, offset in zip(names, offsets):
         field = fields[name]
-        itemsize = max(itemsize, offset + field[0].itemsize)
+        if offset == field[1]:
+            continue
 
-        if offset != field[1]:
-            fields[name] = (field[0], offset)
+        fields[name] = (field[0], offset)
+
+        if offset > max_offset:
+            itemsize = offset + field[0].itemsize
+            max_offset = offset
 
     new_typespec = '|V{0}'.format(itemsize)
 

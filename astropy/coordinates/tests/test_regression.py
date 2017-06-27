@@ -9,7 +9,6 @@ place to live
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import pytest
 import numpy as np
 
 from ... import units as u
@@ -20,7 +19,7 @@ from ..sites import get_builtin_sites
 from ...time import Time
 from ...utils import iers
 
-from ...tests.helper import assert_quantity_allclose, catch_warnings, quantity_allclose
+from ...tests.helper import pytest, assert_quantity_allclose, catch_warnings, quantity_allclose
 from .test_matching import HAS_SCIPY, OLDER_SCIPY
 
 
@@ -349,21 +348,3 @@ def test_regression_simple_5133():
     # az is more-or-less undefined for straight up or down
     assert_quantity_allclose(aa.alt, [90, -90]*u.deg, rtol=1e-5)
     assert_quantity_allclose(aa.distance, [90, 10]*u.km)
-
-
-def test_regression_5743():
-    sc = SkyCoord([5, 10], [20, 30], unit=u.deg,
-                  obstime=['2017-01-01T00:00', '2017-01-01T00:10'])
-    assert sc[0].obstime.shape == tuple()
-
-
-def test_regression_5889_5890():
-    # ensure we can represent all Representations and transform to ND frames
-    greenwich = EarthLocation(
-        *u.Quantity([3980608.90246817, -102.47522911,  4966861.27310067],
-        unit=u.m))
-    times = Time("2017-03-20T12:00:00") + np.linspace(-2,2,3)*u.hour
-    moon = get_moon(times, location=greenwich)
-    targets = SkyCoord([350.7*u.deg, 260.7*u.deg], [18.4*u.deg, 22.4*u.deg])
-    targs2d = targets[:, np.newaxis]
-    targs2d.transform_to(moon)

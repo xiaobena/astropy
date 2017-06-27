@@ -1,7 +1,7 @@
 .. _doc_standard_units:
 
 Standard units
-**************
+==============
 
 Standard units are defined in the `astropy.units` package as object
 instances.
@@ -39,91 +39,19 @@ all the existing predefined units of a given type::
   [
     M_e          | 9.10938e-31 kg  |                                  ,
     M_p          | 1.67262e-27 kg  |                                  ,
-    earthMass    | 5.97236e+24 kg  | M_earth, Mearth                  ,
+    earthMass    | 5.9742e+24 kg   | M_earth, Mearth                  ,
     g            | 0.001 kg        | gram                             ,
-    jupiterMass  | 1.89819e+27 kg  | M_jup, Mjup, M_jupiter, Mjupiter ,
+    jupiterMass  | 1.8987e+27 kg   | M_jup, Mjup, M_jupiter, Mjupiter ,
     kg           | irreducible     | kilogram                         ,
-    solMass      | 1.98848e+30 kg  | M_sun, Msun                      ,
+    solMass      | 1.9891e+30 kg   | M_sun, Msun                      ,
     t            | 1000 kg         | tonne                            ,
     u            | 1.66054e-27 kg  | Da, Dalton                       ,
   ]
 
-
-Prefixes
-========
-
-Most units can be used with prefixes, with both the standard SI prefixes and
-the IEEE 1514 binary prefixes (for ``bit`` and ``byte``) supported:
-
-+------------------------------+
-|  Available decimal prefixes  |
-+--------+-------------+-------+
-| Symbol |    Prefix   | Value |
-+========+=============+=======+
-|    Y   |    yotta-   |  1e24 |
-+--------+-------------+-------+
-|    Z   |    zetta-   |  1e21 |
-+--------+-------------+-------+
-|    E   |     exa-    |  1e18 |
-+--------+-------------+-------+
-|    P   |    peta-    |  1e15 |
-+--------+-------------+-------+
-|    T   |    tera-    |  1e12 |
-+--------+-------------+-------+
-|    G   |    giga-    |  1e9  |
-+--------+-------------+-------+
-|    M   |    mega-    |  1e6  |
-+--------+-------------+-------+
-|    k   |    kilo-    |  1e3  |
-+--------+-------------+-------+
-|    h   |    hecto-   |  1e2  |
-+--------+-------------+-------+
-|   da   | deka-, deca |  1e1  |
-+--------+-------------+-------+
-|    d   |    deci-    |  1e-1 |
-+--------+-------------+-------+
-|    c   |    centi-   |  1e-2 |
-+--------+-------------+-------+
-|    m   |    milli-   |  1e-3 |
-+--------+-------------+-------+
-|    u   |    micro-   |  1e-6 |
-+--------+-------------+-------+
-|    n   |    nano-    |  1e-9 |
-+--------+-------------+-------+
-|    p   |    pico-    | 1e-12 |
-+--------+-------------+-------+
-|    f   |    femto-   | 1e-15 |
-+--------+-------------+-------+
-|    a   |    atto-    | 1e-18 |
-+--------+-------------+-------+
-|    z   |    zepto-   | 1e-21 |
-+--------+-------------+-------+
-|    y   |    yocto-   | 1e-24 |
-+--------+-------------+-------+
-
-+---------------------------+
-| Available binary prefixes |
-+--------+--------+---------+
-| Symbol | Prefix |  Value  |
-+========+========+=========+
-|   Ki   |  kibi- | 2 ** 10 |
-+--------+--------+---------+
-|   Mi   |  mebi- | 2 ** 20 |
-+--------+--------+---------+
-|   Gi   |  gibi- | 2 ** 30 |
-+--------+--------+---------+
-|   Ti   |  tebi- | 2 ** 40 |
-+--------+--------+---------+
-|   Pi   |  pebi- | 2 ** 50 |
-+--------+--------+---------+
-|   Ei   |  exbi- | 2 ** 60 |
-+--------+--------+---------+
-
-
 .. _doc_dimensionless_unit:
 
 The dimensionless unit
-======================
+----------------------
 
 In addition to these units, `astropy.units` includes the concept of
 the dimensionless unit, used to indicate quantities that don't have a
@@ -178,7 +106,7 @@ use the `~astropy.units.core.UnitBase.physical_type` property::
 .. _enabling-other-units:
 
 Enabling other units
-====================
+--------------------
 
 By default, only the "default" units are searched by
 `~astropy.units.core.UnitBase.find_equivalent_units` and similar
@@ -206,7 +134,7 @@ For example, to enable Imperial units, simply do::
       mil          | 2.54e-05 m      | thou                  ,
       nmi          | 1852 m          | nauticalmile, NM      ,
       pc           | 3.08568e+16 m   | parsec                ,
-      solRad       | 6.957e+08 m     | R_sun, Rsun           ,
+      solRad       | 6.95508e+08 m   | R_sun, Rsun           ,
       yd           | 0.9144 m        | yard                  ,
     ]
 

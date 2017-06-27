@@ -14,15 +14,12 @@ from __future__ import (absolute_import, division, print_function,
 import os
 import shutil
 import tempfile
-import warnings
-
-import pytest
 
 # LOCAL
 from .. import vos_catalog
 from ..exceptions import (VOSError, MissingCatalog, DuplicateCatalogName,
                           DuplicateCatalogURL)
-from ....tests.helper import remote_data, catch_warnings
+from ....tests.helper import pytest, remote_data, catch_warnings
 from ....utils.exceptions import AstropyDeprecationWarning
 from ....utils.data import get_pkg_data_filename
 
@@ -30,15 +27,6 @@ from ....utils.data import get_pkg_data_filename
 __doctest_skip__ = ['*']
 
 DB_FILE = get_pkg_data_filename(os.path.join('data', 'basic.json'))
-
-
-def setup_module():
-    """Ignore all deprecation warnings here."""
-    warnings.simplefilter('ignore', AstropyDeprecationWarning)
-
-
-def teardown_module():
-    warnings.resetwarnings()
 
 
 class TestCatalog(object):

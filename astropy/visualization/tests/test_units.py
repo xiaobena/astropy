@@ -6,14 +6,16 @@ from __future__ import (absolute_import, division, print_function,
 
 import io
 
-import pytest
-
 try:
     import matplotlib.pyplot as plt
 except ImportError:
     HAS_PLT = False
 else:
     HAS_PLT = True
+
+
+from ...tests.helper import pytest
+
 
 from ... import units as u
 from ..units import quantity_support

@@ -143,8 +143,7 @@ class LatexHeader(core.BaseHeader):
             align = '[' + self.latex['tablealign'] + ']'
         else:
             align = ''
-        if self.latex['tabletype'] is not None:
-            lines.append(r'\begin{' + self.latex['tabletype'] + r'}' + align)
+        lines.append(r'\begin{' + self.latex['tabletype'] + r'}' + align)
         add_dictval_to_list(self.latex, 'preamble', lines)
         if 'caption' in self.latex:
             lines.append(r'\caption{' + self.latex['caption'] + '}')
@@ -183,8 +182,7 @@ class LatexData(core.BaseData):
         add_dictval_to_list(self.latex, 'data_end', lines)
         lines.append(self.data_end)
         add_dictval_to_list(self.latex, 'tablefoot', lines)
-        if self.latex['tabletype'] is not None:
-            lines.append(r'\end{' + self.latex['tabletype'] + '}')
+        lines.append(r'\end{' + self.latex['tabletype'] + '}')
 
 
 class Latex(core.BaseReader):
@@ -224,9 +222,6 @@ class Latex(core.BaseReader):
 
                 ascii.write(data, sys.stdout, Writer = ascii.Latex,
                             latexdict = {'tabletype': 'table*'})
-
-            If ``None``, the table environment will be dropped, keeping only
-            the ``tabular`` environment.
 
         * tablealign : positioning of table in text.
             The default is not to specify a position preference in the text.

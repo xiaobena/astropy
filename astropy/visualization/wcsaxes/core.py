@@ -210,9 +210,9 @@ class WCSAxes(Axes):
             plot_data = []
             for coord in self.coords:
                 if coord.coord_type == 'longitude':
-                    plot_data.append(frame0.data.lon.to_value(coord.coord_unit))
+                    plot_data.append(frame0.data.lon.to(coord.coord_unit).value)
                 elif coord.coord_type == 'latitude':
-                    plot_data.append(frame0.data.lat.to_value(coord.coord_unit))
+                    plot_data.append(frame0.data.lat.to(coord.coord_unit).value)
                 else:
                     raise NotImplementedError("Coordinates cannot be plotted with this "
                                               "method because the WCS does not represent longitude/latitude.")
@@ -254,20 +254,14 @@ class WCSAxes(Axes):
         # to continue updating it. CoordinatesMap will create a new frame
         # instance, but we can tell that instance to keep using the old path.
         if hasattr(self, 'coords'):
-            previous_frame = {'path': self.coords.frame._path,
-                              'color': self.coords.frame.get_color(),
-                              'linewidth': self.coords.frame.get_linewidth()}
+            previous_frame_path = self.coords.frame._path
         else:
-            previous_frame = {'path': None}
+            previous_frame_path = None
 
         self.coords = CoordinatesMap(self, wcs=self.wcs, slice=slices,
                                      transform=transform, coord_meta=coord_meta,
                                      frame_class=self.frame_class,
-                                     previous_frame_path=previous_frame['path'])
-
-        if previous_frame['path'] is not None:
-            self.coords.frame.set_color(previous_frame['color'])
-            self.coords.frame.set_linewidth(previous_frame['linewidth'])
+                                     previous_frame_path=previous_frame_path)
 
         self._all_coords = [self.coords]
 
@@ -352,11 +346,11 @@ class WCSAxes(Axes):
 
         self._drawn = True
 
-    def set_xlabel(self, label, labelpad=1, **kwargs):
-        self.coords[self._x_index].set_axislabel(label, minpad=labelpad, **kwargs)
+    def set_xlabel(self, label):
+        self.coords[self._x_index].set_axislabel(label)
 
-    def set_ylabel(self, label, labelpad=1, **kwargs):
-        self.coords[self._y_index].set_axislabel(label, minpad=labelpad, **kwargs)
+    def set_ylabel(self, label):
+        self.coords[self._y_index].set_axislabel(label)
 
     def get_xlabel(self):
         return self.coords[self._x_index].get_axislabel()

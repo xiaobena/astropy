@@ -22,7 +22,7 @@ import inspect
 import subprocess
 
 from abc import ABCMeta, abstractmethod
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 
 import numpy as np
 
@@ -34,6 +34,7 @@ from ..extern.six.moves import range
 
 __all__ = ['TransformGraph', 'CoordinateTransform', 'FunctionTransform',
            'StaticMatrixTransform', 'DynamicMatrixTransform', 'CompositeTransform']
+
 
 class TransformGraph(object):
     """
@@ -69,19 +70,6 @@ class TransformGraph(object):
 
         return self._cached_frame_set.copy()
 
-    @property
-    def frame_attributes(self):
-        """
-        A `dict` of all the attributes of all frame classes in this `TransformGraph`.
-        """
-        if self._cached_frame_attributes is None:
-            result = {}
-            for frame_cls in self.frame_set:
-                result.update(frame_cls.frame_attributes)
-            self._cached_frame_attributes = result
-
-        return self._cached_frame_attributes
-
     def invalidate_cache(self):
         """
         Invalidates the cache that stores optimizations for traversing the
@@ -91,7 +79,6 @@ class TransformGraph(object):
         """
         self._cached_names_dct = None
         self._cached_frame_set = None
-        self._cached_frame_attributes = None
         self._shortestpaths = {}
         self._composite_cache = {}
 
@@ -323,7 +310,7 @@ class TransformGraph(object):
         """
         if not inspect.isclass(fromsys):
             raise TypeError('fromsys is not a class')
-        if not inspect.isclass(tosys):
+        if not inspect.isclass(fromsys):
             raise TypeError('tosys is not a class')
 
         path, distance = self.find_shortest_path(fromsys, tosys)
@@ -375,7 +362,7 @@ class TransformGraph(object):
         return list(six.iterkeys(self._cached_names))
 
     def to_dot_graph(self, priorities=True, addnodes=[], savefn=None,
-                     savelayout='plain', saveformat=None, color_edges=True):
+                     savelayout='plain', saveformat=None):
         """
         Converts this transform graph to the graphviz_ DOT format.
 
@@ -402,10 +389,6 @@ class TransformGraph(object):
             The graphviz output format. (e.g. the ``-Txxx`` option for
             the command line program - see graphviz docs for details).
             Ignored if ``savefn`` is `None`.
-        color_edges : bool
-            Color the edges between two nodes (frames) based on the type of
-            transform. ``FunctionTransform``: red, ``StaticMatrixTransform``:
-            blue, ``DynamicMatrixTransform``: green.
 
         Returns
         -------
@@ -437,27 +420,15 @@ class TransformGraph(object):
         for a in self._graph:
             agraph = self._graph[a]
             for b in agraph:
-                transform = agraph[b]
-                pri = transform.priority if hasattr(transform, 'priority') else 1
-                color = trans_to_color[transform.__class__] if color_edges else 'black'
-                edgenames.append((a.__name__, b.__name__, pri, color))
+                pri = agraph[b].priority if hasattr(agraph[b], 'priority') else 1
+                edgenames.append((a.__name__, b.__name__, pri))
 
         # generate simple dot format graph
         lines = ['digraph AstropyCoordinateTransformGraph {']
         lines.append('; '.join(nodenames) + ';')
-        for enm1, enm2, weights, color in edgenames:
-            labelstr_fmt = '[ {0} {1} ]'
-
-            if priorities:
-                priority_part = 'label = "{0}"'.format(weights)
-            else:
-                priority_part = ''
-
-            color_part = 'color = "{0}"'.format(color)
-
-            labelstr = labelstr_fmt.format(priority_part, color_part)
+        for enm1, enm2, weights in edgenames:
+            labelstr = '[ label = "{0}" ]'.format(weights) if priorities else ''
             lines.append('{0} -> {1}{2};'.format(enm1, enm2, labelstr))
-
         lines.append('')
         lines.append('overlap=false')
         lines.append('}')
@@ -512,14 +483,12 @@ class TransformGraph(object):
         for a in self._graph:
             agraph = self._graph[a]
             for b in agraph:
-                transform = agraph[b]
-                pri = transform.priority if hasattr(transform, 'priority') else 1
-                color = trans_to_color[transform.__class__]
-                nxgraph.add_edge(a, b, weight=pri, color=color)
+                pri = agraph[b].priority if hasattr(agraph[b], 'priority') else 1
+                nxgraph.add_edge(a, b, weight=pri)
 
         return nxgraph
 
-    def transform(self, transcls, fromsys, tosys, priority=1, **kwargs):
+    def transform(self, transcls, fromsys, tosys, priority=1):
         """
         A function decorator for defining transformations.
 
@@ -538,9 +507,6 @@ class TransformGraph(object):
         priority : number
             The priority if this transform when finding the shortest
             coordinate transform path - large numbers are lower priorities.
-
-        Additional keyword arguments are passed into the ``transcls``
-        constructor.
 
         Returns
         -------
@@ -581,7 +547,7 @@ class TransformGraph(object):
             # ``register_graph=self`` stores it in the transform graph
             # automatically
             transcls(func, fromsys, tosys, priority=priority,
-                     register_graph=self, **kwargs)
+                     register_graph=self)
             return func
         return deco
 
@@ -797,7 +763,10 @@ class StaticMatrixTransform(CoordinateTransform):
             #think it has a valid distance
             newrep = newrep.represent_as(fromcoord.data.__class__)
 
-        return toframe.realize_frame(newrep)
+        frameattrs = dict([(attrnm, getattr(fromcoord, attrnm))
+                           for attrnm in self.overlapping_frame_attr_names])
+
+        return toframe.realize_frame(newrep, **frameattrs)
 
 
 class DynamicMatrixTransform(CoordinateTransform):
@@ -940,9 +909,3 @@ class CompositeTransform(CoordinateTransform):
         # this is safe even in the case where self.transforms is empty, because
         # coordinate objects are immutible, so copying is not needed
         return curr_coord
-
-# map class names to colorblind-safe colors
-trans_to_color = OrderedDict()
-trans_to_color[FunctionTransform] = '#d95f02' # red-ish
-trans_to_color[StaticMatrixTransform] = '#7570b3' # blue-ish
-trans_to_color[DynamicMatrixTransform] = '#1b9e77' # green-ish

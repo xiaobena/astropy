@@ -226,7 +226,8 @@ Other Credits
 * Kyle Barbary for designing the Astropy logos and documentation themes.
 * Andrew Pontzen and the `pynbody <https://github.com/pynbody/pynbody>`_ team
   (For code that grew into :mod:`astropy.units`)
-* Everyone on the `astropy-dev mailing list`_ and the `Astropy mailing list`_
+* Everyone on `astropy-dev <http://groups.google.com/group/astropy-dev>`_
+  and the `astropy mailing list <http://mail.scipy.org/mailman/listinfo/astropy>`_
   for contributing to many discussions and decisions!
 
 (If you have contributed to the Astropy project and your name is missing,

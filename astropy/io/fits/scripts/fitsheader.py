@@ -42,11 +42,14 @@ header that describes the compression.
 With Astropy installed, please run ``fitsheader --help`` to see the full usage
 documentation.
 """
-from __future__ import absolute_import, division, print_function
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
 import sys
 
 from ... import fits
+
+from .... import table
 from .... import log
 from ....extern.six.moves import range
 
@@ -132,14 +135,17 @@ class HeaderFormatter(object):
         for idx, hdu in enumerate(hdukeys):
             try:
                 cards = self._get_cards(hdu, keywords, compressed)
-            except ExtensionNotFoundException:
-                continue
 
-            if idx > 0:  # Separate HDUs by a blank line
-                result.append('\n')
-            result.append('# HDU {} in {}:\n'.format(hdu, self.filename))
-            for c in cards:
-                result.append('{}\n'.format(c))
+                if idx > 0:  # Separate HDUs by a blank line
+                    result.append('\n')
+                result.append('# HDU {hdu} in {filename}:\n'.format(
+                              filename=self.filename,
+                              hdu=hdu
+                              ))
+                result.append('{0}\n'.format('\n'.join([str(c)
+                                                        for c in cards])))
+            except ExtensionNotFoundException:
+                pass
         return ''.join(result)
 
     def _get_cards(self, hdukey, keywords, compressed):
@@ -220,7 +226,6 @@ class TableHeaderFormatter(HeaderFormatter):
                 pass
 
         if tablerows:
-            from .... import table
             return table.Table(tablerows)
         return None
 
@@ -271,7 +276,6 @@ def print_headers_as_table(args):
     elif len(tables) == 1:
         resulting_table = tables[0]
     else:
-        from .... import table
         resulting_table = table.vstack(tables)
     # Print the string representation of the concatenated table
     resulting_table.write(sys.stdout, format=args.table)

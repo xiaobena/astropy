@@ -9,8 +9,7 @@ from ... import units as u
 from ..representation import (SphericalRepresentation, CartesianRepresentation,
                               UnitSphericalRepresentation)
 from ..baseframe import (BaseCoordinateFrame, frame_transform_graph,
-                         RepresentationMapping)
-from ..frame_attributes import TimeFrameAttribute
+                         TimeFrameAttribute, RepresentationMapping)
 from ..transformations import FunctionTransform, DynamicMatrixTransform
 from .. import earth_orientation as earth
 

@@ -31,6 +31,8 @@ RELEASE = 'dev' not in VERSION
 if not RELEASE:
     VERSION += get_git_devstr(False)
 
+DOWNLOAD_BASE_URL = 'https://pypi.python.org/packages/source/a/astropy'
+
 # Populate the dict of setup command overrides; this should be done before
 # invoking any other functionality from distutils since it can potentially
 # modify distutils' behavior.
@@ -63,7 +65,7 @@ entry_points['console_scripts'] = [
 ]
 
 setup_requires = ['numpy>=' + astropy.__minimum_numpy_version__]
-install_requires = ['pytest>=2.8', 'numpy>=' + astropy.__minimum_numpy_version__]
+install_requires = ['numpy>=' + astropy.__minimum_numpy_version__]
 # Avoid installing setup_requires dependencies if the user just
 # queries for information
 if is_distutils_display_option():
@@ -82,6 +84,7 @@ setup(name=NAME,
       license='BSD',
       url='http://astropy.org',
       long_description=astropy.__doc__,
+      download_url='{0}/astropy-{1}.tar.gz'.format(DOWNLOAD_BASE_URL, VERSION),
       keywords=['astronomy', 'astrophysics', 'cosmology', 'space', 'science',
                 'units', 'table', 'wcs', 'vo', 'samp', 'coordinate', 'fits',
                 'modeling', 'models', 'fitting', 'ascii'],

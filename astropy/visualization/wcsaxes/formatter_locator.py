@@ -238,16 +238,10 @@ class AngleFormatterLocator(BaseFormatterLocator):
 
         else:
 
-            # In the special case where value_min is the same as value_max, we
-            # don't locate any ticks. This can occur for example when taking a
-            # slice for a cube (along the dimension sliced).
-            if value_min == value_max:
-                return [] * u.deg, 0 * u.arcsec
-
             if self.spacing is not None:
 
                 # spacing was manually specified
-                spacing_deg = self.spacing.to_value(u.degree)
+                spacing_deg = self.spacing.to(u.degree).value
 
             elif self.number is not None:
 
@@ -259,15 +253,15 @@ class AngleFormatterLocator(BaseFormatterLocator):
                 if self.format is not None and dv < self.base_spacing:
                     # if the spacing is less than the minimum spacing allowed by the format, simply
                     # use the format precision instead.
-                    spacing_deg = self.base_spacing.to_value(u.degree)
+                    spacing_deg = self.base_spacing.to(u.degree).value
                 else:
                     # otherwise we clip to the nearest 'sensible' spacing
                     if self._unit is u.degree:
                         from .utils import select_step_degree
-                        spacing_deg = select_step_degree(dv).to_value(u.degree)
+                        spacing_deg = select_step_degree(dv).to(u.degree).value
                     else:
                         from .utils import select_step_hour
-                        spacing_deg = select_step_hour(dv).to_value(u.degree)
+                        spacing_deg = select_step_hour(dv).to(u.degree).value
 
             # We now find the interval values as multiples of the spacing and
             # generate the tick positions from this.
@@ -281,7 +275,7 @@ class AngleFormatterLocator(BaseFormatterLocator):
 
         if len(values) > 0:
             if self.format is None:
-                spacing = spacing.to_value(u.arcsec)
+                spacing = spacing.to(u.arcsec).value
                 if spacing > 3600:
                     fields = 1
                     precision = 0
@@ -415,16 +409,10 @@ class ScalarFormatterLocator(BaseFormatterLocator):
             return self.values, 1.1 * self._unit
         else:
 
-            # In the special case where value_min is the same as value_max, we
-            # don't locate any ticks. This can occur for example when taking a
-            # slice for a cube (along the dimension sliced).
-            if value_min == value_max:
-                return [] * self._unit, 0 * self._unit
-
             if self.spacing is not None:
 
                 # spacing was manually specified
-                spacing = self.spacing.to_value(self._unit)
+                spacing = self.spacing.to(self._unit).value
 
             elif self.number is not None:
 
@@ -436,7 +424,7 @@ class ScalarFormatterLocator(BaseFormatterLocator):
                 if self.format is not None and (not self.format.startswith('%')) and dv < self.base_spacing.value:
                     # if the spacing is less than the minimum spacing allowed by the format, simply
                     # use the format precision instead.
-                    spacing = self.base_spacing.to_value(self._unit)
+                    spacing = self.base_spacing.to(self._unit).value
                 else:
                     from .utils import select_step_scalar
                     spacing = select_step_scalar(dv)
@@ -460,7 +448,7 @@ class ScalarFormatterLocator(BaseFormatterLocator):
             else:
                 precision = self._precision
 
-            return [("{0:." + str(precision) + "f}").format(x.to_value(self._format_unit)) for x in values]
+            return [("{0:." + str(precision) + "f}").format(x.to(self._format_unit).value) for x in values]
 
         else:
             return []

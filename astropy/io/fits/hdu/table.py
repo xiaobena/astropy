@@ -248,6 +248,22 @@ class _TableBaseHDU(ExtensionHDU, _TableLikeHDU):
     """
 
     def __init__(self, data=None, header=None, name=None, uint=False):
+        """
+        Parameters
+        ----------
+        header : Header instance
+            header to be used
+
+        data : array
+            data to be used
+
+        name : str
+            name to be populated in ``EXTNAME`` keyword
+
+        uint : bool, optional
+            set to `True` if the table contains unsigned integer columns.
+        """
+
         super(_TableBaseHDU, self).__init__(data=data, header=header,
                                             name=name)
 
@@ -674,16 +690,6 @@ class _TableBaseHDU(ExtensionHDU, _TableLikeHDU):
 class TableHDU(_TableBaseHDU):
     """
     FITS ASCII table extension HDU class.
-
-    Parameters
-    ----------
-    data : array or `FITS_rec`
-        Data to be used.
-    header : `Header`
-        Header to be used.
-    name : str
-        Name to be populated in ``EXTNAME`` keyword.
-
     """
 
     _extension = 'TABLE'
@@ -779,34 +785,11 @@ class TableHDU(_TableBaseHDU):
 class BinTableHDU(_TableBaseHDU):
     """
     Binary table HDU class.
-
-    Parameters
-    ----------
-    data : array, `FITS_rec`, or `~astropy.table.Table`
-        Data to be used.
-    header : `Header`
-        Header to be used.
-    name : str
-        Name to be populated in ``EXTNAME`` keyword.
-    uint : bool, optional
-        Set to `True` if the table contains unsigned integer columns.
-
     """
 
     _extension = 'BINTABLE'
     _ext_comment = 'binary table extension'
 
-    def __init__(self, data=None, header=None, name=None, uint=False):
-        from ....table import Table
-        if isinstance(data, Table):
-            from ..convenience import table_to_hdu
-            hdu = table_to_hdu(data)
-            if header is not None:
-                hdu.header.update(header)
-            data = hdu.data
-            header = hdu.header
-
-        super(BinTableHDU, self).__init__(data, header, name=name, uint=uint)
 
     @classmethod
     def match_header(cls, header):
@@ -926,21 +909,11 @@ class BinTableHDU(_TableBaseHDU):
         for idx in range(len(self.data)):
             for field in fields:
                 item = field[idx]
-                field_width = None
 
                 if field.dtype.kind == 'U':
-                    # Read the field *width* by reading past the field kind.
-                    i = field.dtype.str.index(field.dtype.kind)
-                    field_width = int(field.dtype.str[i+1:])
                     item = np.char.encode(item, 'ascii')
 
                 fileobj.writearray(item)
-                if field_width is not None:
-                    j = item.dtype.str.index(item.dtype.kind)
-                    item_length = int(item.dtype.str[j+1:])
-                    # Fix padding problem (see #5296).
-                    padding = '\x00'*(field_width - item_length)
-                    fileobj.write(padding.encode('ascii'))
 
     _tdump_file_format = textwrap.dedent("""
 
@@ -995,7 +968,7 @@ class BinTableHDU(_TableBaseHDU):
           image.
       """)
 
-    @deprecated_renamed_argument('clobber', 'overwrite', '2.0')
+    @deprecated_renamed_argument('clobber', 'overwrite', '1.3')
     def dump(self, datafile=None, cdfile=None, hfile=None, overwrite=False):
         """
         Dump the table HDU to a file in ASCII format.  The table may be dumped
