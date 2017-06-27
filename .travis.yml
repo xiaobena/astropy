@@ -112,11 +112,10 @@ matrix:
         - os: linux
           env: NUMPY_VERSION=prerelease
                EVENT_TYPE='push pull_request cron'
-		
-	  - os: linux
-	    env: NUMPY_VERSION=b9fb9862627e40fc5c4aef9a841c407c79dc6c3f
+
+        - os: linux
+          env: NUMPY_VERSION=b9fb9862627e40fc5c4aef9a841c407c79dc6c3f
                EVENT_TYPE='push pull_request cron'
-		
 
         # Do a PEP8/pyflakes test with flake8
         - os: linux
